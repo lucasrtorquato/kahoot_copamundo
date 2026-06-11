@@ -111,7 +111,7 @@
             box-shadow: 0 4px 10px rgba(0, 156, 59, 0.3);
         }
 
-        #btn-start:hover, #btn-restart:hover, #btn-next:hover {
+        #btn-start:hover, #btn-restart:hover {
             background: #007c2f;
         }
 
@@ -126,6 +126,20 @@
             background: #e6c500;
         }
 
+        .btn-giveup {
+            background: #e21b3c;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(226, 27, 60, 0.3);
+        }
+        .btn-giveup:hover {
+            background: #b8122b;
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.02); }
@@ -136,10 +150,17 @@
         .quiz-header {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-weight: bold;
             margin-bottom: 25px;
-            font-size: 18px;
+            font-size: 16px;
             color: #333;
+        }
+
+        .quiz-header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         #timer {
@@ -346,7 +367,10 @@
     <div id="screen-quiz" class="card hidden">
         <div class="quiz-header">
             <span id="question-number">Pergunta 1/X</span>
-            <div id="timer">⏱️ <span id="time-left">0</span>s</div>
+            <div class="quiz-header-right">
+                <div id="timer">⏱️ <span id="time-left">0</span>s</div>
+                <button class="btn-giveup" onclick="desistirPartida()">Desistir 🏳️</button>
+            </div>
         </div>
         
         <h2 id="question-text">Buscando pergunta...</h2>
@@ -363,7 +387,7 @@
     </div>
 
     <div id="screen-result" class="card hidden">
-        <h2 style="color: #009c3b;">Fim de Jogo! 🎉</h2>
+        <h2 id="result-title" style="color: #009c3b;">Fim de Jogo! 🎉</h2>
         <br>
         <p id="result-message" style="font-size: 18px; line-height: 1.6;"></p>
         <br>
@@ -371,7 +395,7 @@
     </div>
 
     <script>
-        // Banco de dados base padrão (Caso o usuário nunca tenha salvo um customizado)
+        // Banco de dados base padrão
         const perguntasPadrao = [
             { "pergunta": "Em qual ano o Brasil ganhou sua primeira Copa do Mundo?", "alternativas": ["1950", "1958", "1962", "1970"], "correta": 1 },
             { "pergunta": "Quem é o maior artilheiro da história das Copas do Mundo?", "alternativas": ["Miroslav Klose", "Ronaldo Fenômeno", "Pelé", "Maradona"], "correta": 0 },
@@ -434,6 +458,7 @@
         const btnAnswers = document.querySelectorAll('.btn-answer');
         const feedbackMessage = document.getElementById('feedback-message');
         const txtResultMessage = document.getElementById('result-message');
+        const resultTitle = document.getElementById('result-title');
         const jsonTextarea = document.getElementById('json-textarea');
         const adminContent = document.getElementById('admin-content');
 
@@ -446,26 +471,23 @@
         let tempoTotalSegundos = 0;
         let intervaloCronometro;
         let cronometroRodando = false;
+        let partiuPorDesistencia = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             atualizarInterfaceHistorico();
-            // Preenche o campo de texto com o JSON atual formatado e bonito
             jsonTextarea.value = JSON.stringify(bancoPerguntasJSON, null, 2);
         });
 
-        // Alternar visibilidade do painel admin
         function toggleAdminPanel() {
             adminContent.classList.toggle('hidden');
         }
 
-        // Copiar conteúdo JSON
         function copiarJSON() {
             jsonTextarea.select();
             document.execCommand('copy');
             alert("JSON copiado com sucesso! Você pode colá-lo em um bloco de notas.");
         }
 
-        // Salvar JSON modificado
         function salvarNovoJSON() {
             try {
                 const novoBanco = JSON.parse(jsonTextarea.value);
@@ -490,7 +512,6 @@
             totalPerguntasDesejadas = parseInt(selectLength.value);
             const limitePerguntas = Math.min(totalPerguntasDesejadas, bancoPerguntasJSON.length);
 
-            // Mistura as perguntas aleatoriamente
             perguntasFiltradas = [...bancoPerguntasJSON]
                 .sort(() => 0.5 - Math.random())
                 .slice(0, limitePerguntas);
@@ -498,6 +519,7 @@
             indiceAtual = 0;
             acertos = 0;
             tempoTotalSegundos = 0;
+            partiuPorDesistencia = false;
 
             screenStart.classList.add('hidden');
             screenQuiz.classList.remove('hidden');
@@ -579,25 +601,52 @@
             }
         });
 
+        // Função para desistir da partida no meio
+        function desistirPartida() {
+            const confirmacao = confirm("Quer mesmo pedir substituição e sair de campo agora?");
+            if (confirmacao) {
+                partiuPorDesistencia = true;
+                finalizarJogo();
+            }
+        }
+
         function finalizarJogo() {
             clearInterval(intervaloCronometro);
             screenQuiz.classList.add('hidden');
             screenResult.classList.remove('hidden');
 
-            txtResultMessage.innerHTML = `
-                Fim dos 90 minutos, <strong>${nomeUsuario}</strong>!<br>
-                Você concluiu o desafio máximo do Quiz!<br><br>
-                ⚽ Gols/Acertos: <strong>${acertos} de ${perguntasFiltradas.length}</strong><br>
-                ⏱️ Tempo de Partida: <strong>${tempoTotalSegundos} segundos</strong>
-            `;
+            // Personaliza o título dependendo se ele respondeu tudo ou desistiu antes
+            if (partiuPorDesistencia) {
+                resultTitle.textContent = "Fim de Jogo (Substituído!) 🏳️";
+                resultTitle.style.color = "#e21b3c";
+                txtResultMessage.innerHTML = `
+                    O jogador <strong>${nomeUsuario}</strong> preferiu ir para o banco de reservas.<br>
+                    Você parou na pergunta <strong>${indiceAtual + 1}</strong>.<br><br>
+                    ⚽ Gols/Acertos até aqui: <strong>${acertos} de ${perguntasFiltradas.length}</strong><br>
+                    ⏱️ Tempo de campo: <strong>${tempoTotalSegundos} segundos</strong>
+                `;
+            } else {
+                resultTitle.textContent = "Fim de Jogo! 🎉";
+                resultTitle.style.color = "#009c3b";
+                txtResultMessage.innerHTML = `
+                    Fim dos 90 minutos, <strong>${nomeUsuario}</strong>!<br>
+                    Você concluiu o desafio máximo do Quiz!<br><br>
+                    ⚽ Gols/Acertos: <strong>${acertos} de ${perguntasFiltradas.length}</strong><br>
+                    ⏱️ Tempo de Partida: <strong>${tempoTotalSegundos} segundos</strong>
+                `;
+            }
 
             salvarNoHistorico();
         }
 
         function salvarNoHistorico() {
             const historico = JSON.parse(localStorage.getItem('historicoMundialKahoot')) || [];
+            
+            // Adiciona um aviso visual no histórico se o jogador desistiu
+            const sufixoNome = partiuPorDesistencia ? " (Desistiu)" : "";
+
             const resultadoPartida = {
-                nome: nomeUsuario,
+                nome: nomeUsuario + sufixoNome,
                 acertos: acertos,
                 total: perguntasFiltradas.length,
                 tempo: tempoTotalSegundos

@@ -67,7 +67,6 @@
         .btn-export:hover { background-color: #000; }
         .btn-import:hover { background-color: #074371; }
 
-        /* Botão Sair do Jogo */
         .btn-leave {
             position: absolute; top: 15px; left: 20px;
             background-color: #777; color: white; font-size: 13px;
@@ -77,7 +76,6 @@
 
         .hidden { display: none !important; }
 
-        /* Timer */
         .timer-circle {
             width: 85px; height: 85px; border: 6px solid var(--kahoot-purple);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -86,7 +84,6 @@
 
         .question-text { font-size: 28px; font-weight: bold; margin-bottom: 40px; line-height: 1.4; color: #222; width: 100%; }
 
-        /* Grid de Respostas */
         .answers-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; }
 
         .answer-btn {
@@ -103,26 +100,20 @@
         .yellow { background-color: var(--kahoot-yellow); }
         .green { background-color: var(--kahoot-green); }
 
-        /* HUDs e Telas de Transição */
         .hud {
             display: flex; justify-content: space-between; align-items: center;
-            position: absolute; top: 20px; left: 130px; right: 40px; /* Recuado para dar espaço ao botão Sair */
+            position: absolute; top: 20px; left: 130px; right: 40px;
             font-weight: bold; color: #777; font-size: 16px; width: calc(100% - 170px);
         }
         .score-box { color: var(--kahoot-green); font-size: 18px; }
         #status-overlay { color: var(--kahoot-red); font-size: 22px; font-weight: bold; margin-bottom: 15px; letter-spacing: 1px; }
 
-        /* Tela de Espera Animada */
         .spinner {
             width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--kahoot-purple);
             border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Leaderboard */
-        .rank-badge { font-size: 72px; font-weight: bold; color: var(--kahoot-blue); margin: 15px 0; }
-        .points-badge { font-size: 32px; font-weight: bold; color: var(--kahoot-green); margin-bottom: 25px; }
-        
         .leaderboard-mini { width: 100%; max-width: 400px; text-align: left; margin-top: 15px; }
         .leaderboard-item { display: flex; justify-content: space-between; padding: 8px 12px; margin-bottom: 5px; background: #f5f5f5; border-radius: 5px; font-weight: bold; }
         .leaderboard-item.player { background: #eadeff; color: var(--kahoot-purple); }
@@ -208,7 +199,6 @@
     </div>
 
     <script>
-        // BANCO DE DADOS PADRÃO (Variabilidade de perguntas)
         let jsonQuestionsRaw = `[
             { "q": "Qual país ganhou a primeira Copa do Mundo em 1930?", "a": ["Brasil", "Argentina", "Uruguai", "Itália"], "c": 2, "type": "multi" },
             { "q": "O Brasil é o único país que participou de todas as edições da Copa?", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
@@ -229,12 +219,26 @@
             { "q": "Pelé conquistou 4 Copas do Mundo como jogador?", "a": ["Verdadeiro", "Falso"], "c": 1, "type": "tf" },
             { "q": "Qual país europeu venceu sua primeira e única Copa do Mundo em 2010?", "a": ["Espanha", "Holanda", "França", "Portugal"], "c": 0, "type": "multi" },
             { "q": "Em qual Copa do Mundo foi introduzido o uso oficial do VAR?", "a": ["Brasil 2014", "Rússia 2018", "Catar 2022", "África do Sul 2010"], "c": 1, "type": "multi" },
-            { "q": "A seleção da Inglaterra venceu sua única Copa jogando em seu próprio país?", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" }
+            { "q": "A seleção da Inglaterra venceu sua única Copa jogando em seu próprio país?", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
+            { "q": "O que aconteceu com a Taça Jules Rimet original (o primeiro troféu da Copa) após ser roubada no Brasil em 1983?", "a": ["Foi recuperada pela polícia", "Foi derretida pelos ladrões", "Foi encontrada em um ferro-velho", "Está em um museu na Suíça"], "c": 1, "type": "multi" },
+            { "q": "Em qual dessas Copas do Mundo NÃO foi utilizado nenhum tipo de cartão (amarelo ou vermelho)?", "a": ["Uruguai 1930", "México 1970", "Itália 1990", "Coreia/Japão 2002"], "c": 0, "type": "multi" },
+            { "q": "Qual foi a maior goleada registrada na história de todas as Copas do Mundo?", "a": ["Brasil 1 x 7 Alemanha (2014)", "Hungria 10 x 1 El Salvador (1982)", "Alemanha 8 x 0 Arábia Saudita (2002)", "Uruguai 8 x 0 Bolívia (1950)"], "c": 1, "type": "multi" },
+            { "q": "Quem detém o recorde de jogador mais jovem a fazer um gol em uma final de Copa do Mundo?", "a": ["Pelé (1958)", "Kylian Mbappé (2018)", "Lionel Messi (2014)", "Maradona (1986)"], "c": 0, "type": "multi" },
+            { "q": "A Copa do Mundo de 1970, no México, foi a primeira a ser transmitida ao vivo e em cores pela televisão.", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
+            { "q": "Qual foi a única seleção a ser eliminada de uma Copa do Mundo sem sofrer um único gol durante todo o torneio?", "a": ["Itália (2006)", "Suíça (2006)", "Espanha (2010)", "Brasil (1994)"], "c": 1, "type": "multi" },
+            { "q": "O mascot oficial da Copa do Mundo de 1994 (Estados Unidos) era um animal. Qual era?", "a": ["Um cachorro chamado Striker", "Um leopardo chamado Zakumi", "Um leão chamado Goleo", "Um tatu-bola chamado Fuleco"], "c": 0, "type": "multi" },
+            { "q": "Qual dessas grandes seleções tradicionais NUNCA venceu uma Copa do Mundo?", "a": ["França", "Espanha", "Holanda", "Inglaterra"], "c": 2, "type": "multi" },
+            { "q": "Quem é o jogador mais velho a disputar e marcar um gol em uma partida de Copa do Mundo?", "a": ["Cristiano Ronaldo", "Zlatan Ibrahimović", "Roger Milla", "Gianluigi Buffon"], "c": 2, "type": "multi" },
+            { "q": "Em 1930, na primeira final da história, o jogo foi disputado com duas bolas diferentes (uma em cada tempo) porque os finalistas não entravam em acordo.", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
+            { "q": "Qual país sediou a Copa do Mundo que teve o maior público total nos estádios até hoje?", "a": ["Brasil (2014)", "Estados Unidos (1994)", "Alemanha (2006)", "Rússia (2018)"], "c": 1, "type": "multi" },
+            { "q": "Quem é o único treinador na história do futebol a vencer duas Copas do Mundo consecutivas?", "a": ["Mário Zagallo", "Vittorio Pozzo", "Didier Deschamps", "Franz Beckenbauer"], "c": 1, "type": "multi" },
+            { "q": "A primeira substituição de um jogador na história das Copas só foi permitida a partir do ano de:", "a": ["1930", "1954", "1970", "1994"], "c": 2, "type": "multi" },
+            { "q": "Apenas duas nações conseguiram defender seu título e vencer duas Copas seguidas: a Itália (1934/1938) e o Brasil (1958/1962).", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
+            { "q": "Qual jogador detém o recorde bizarro de cartão vermelho mais rápido da história das Copas (expulso aos 56 segundos)?", "a": ["Zinedine Zidane (França)", "José Batista (Uruguai)", "Felipe Melo (Brasil)", "Roy Keane (Irlanda)"], "c": 1, "type": "multi" }
         ]`;
 
         let fullQuestionDatabase = JSON.parse(jsonQuestionsRaw);
 
-        // Estado do Jogo
         let activeQuizQuestions = [];
         let currentIndex = 0;
         let playerScore = 0;
@@ -253,7 +257,62 @@
             { name: "CR7_Robozao", score: 0, speed: 0.1 }
         ];
 
-        // FUNÇÃO DE IMPORTAÇÃO DE ARQUIVO JSON EXTERNO
+        function generateProceduralQuestion() {
+            const selecoes = ["Bélgica", "Croácia", "Uruguai", "Suécia", "Coreia do Sul", "México", "Japão", "Marrocos", "Camarões", "Gana", "Chile", "Dinamarca", "Colômbia", "Senegal", "Equador"];
+            const gigantes = ["Brasil", "Alemanha", "Itália", "Argentina", "França"];
+            const anos = [1954, 1966, 1974, 1982, 1986, 1994, 2002, 2006, 2010, 2014, 2018, 2022];
+            
+            const templates = [
+                () => {
+                    const sel = selecoes[Math.floor(Math.random() * selecoes.length)];
+                    const ano = anos[Math.floor(Math.random() * anos.length)];
+                    return {
+                        q: `História e Curiosidades: A seleção do ${sel} participou da edição da Copa do Mundo realizada no ano de ${ano}?`,
+                        a: ["Verdadeiro", "Falso"],
+                        c: Math.random() > 0.5 ? 0 : 1,
+                        type: "tf"
+                    };
+                },
+                () => {
+                    const g1 = gigantes[Math.floor(Math.random() * gigantes.length)];
+                    let g2 = gigantes[Math.floor(Math.random() * gigantes.length)];
+                    while(g1 === g2) { g2 = gigantes[Math.floor(Math.random() * gigantes.length)]; }
+                    const gol1 = Math.floor(Math.random() * 4);
+                    const gol2 = Math.floor(Math.random() * 4);
+                    
+                    return {
+                        q: `Placares Históricos: É verdadeiro ou falso que em confrontos passados de Copas, o placar de ${g1} ${gol1} x ${gol2} ${g2} já aconteceu oficialmente?`,
+                        a: ["Verdadeiro", "Falso"],
+                        c: 1,
+                        type: "tf"
+                    };
+                },
+                () => {
+                    const ano = anos[Math.floor(Math.random() * anos.length)];
+                    const paisesSede = ["Suíça", "Suécia", "Inglaterra", "México", "Espanha", "Itália", "França", "Coreia/Japão", "África do Sul", "Alemanha"];
+                    
+                    return {
+                        q: `Qual destas seleções surpreendeu o mundo e foi considerada a maior 'zebra' ao derrotar um gigante na Copa de ${ano}?`,
+                        a: ["Costa Rica", "Arábia Saudita", "Camarões", "Coreia do Sul"],
+                        c: Math.floor(Math.random() * 4),
+                        type: "multi"
+                    };
+                },
+                () => {
+                    const num = Math.floor(Math.random() * 12) + 4;
+                    return {
+                        q: `Qual jogador detém a marca histórica de ter marcado exatamente ${num} gols somando todas as suas participações em Copas?`,
+                        a: ["Thomas Müller", "Gabriel Batistuta", "Gary Lineker", "Nenhum destes"],
+                        c: 3,
+                        type: "multi"
+                    };
+                }
+            ];
+
+            const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+            return randomTemplate();
+        }
+
         function handleJSONImport(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -264,35 +323,27 @@
                     const importedData = JSON.parse(e.target.result);
                     if (Array.isArray(importedData) && importedData.length > 0 && importedData[0].q) {
                         fullQuestionDatabase = importedData;
-                        jsonQuestionsRaw = e.target.result; // Atualiza a string raw para caso de exportação futura
+                        jsonQuestionsRaw = e.target.result;
                         alert(`Sucesso! Foram importadas ${importedData.length} perguntas.`);
                     } else {
-                        alert("Formato inválido. Certifique-se de usar a estrutura correta (Array com perguntas 'q', respostas 'a', etc).");
+                        alert("Formato inválido.");
                     }
                 } catch (err) {
-                    alert("Erro ao ler o arquivo JSON. Verifique a sintaxe.");
+                    alert("Erro ao ler o arquivo JSON.");
                 }
             };
             reader.readAsText(file);
         }
 
-        // FUNÇÃO DE SAÍDA DE JOGO A QUALQUER MOMENTO
         function leaveGame() {
-            // Limpa todos os loops ativos de contagem e simulação
             clearInterval(timerInterval);
             clearInterval(simulationInterval);
-            
-            // Oculta todas as telas possíveis de jogo
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('round-results-screen').classList.add('hidden');
             document.getElementById('end-screen').classList.add('hidden');
-            document.getElementById('global-leave-btn').classList.add('hidden'); // Some botão de sair
-            
-            // Restaura tela inicial
+            document.getElementById('global-leave-btn').classList.add('hidden');
             document.getElementById('start-screen').classList.remove('hidden');
-            
-            // Reseta variáveis básicas
             playerScore = 0;
             currentIndex = 0;
             document.getElementById('current-score').textContent = "0";
@@ -311,21 +362,26 @@
             const requestedQty = parseInt(document.getElementById('qty').value);
 
             if(!username) return alert("Por favor, digite um Nickname!");
-            if(isNaN(requestedQty) || requestedQty < 1) return alert("Defina uma quantidade válida.");
+            if(isNaN(requestedQty) || requestedQty < 1 || requestedQty > 200) return alert("Defina uma quantidade válida entre 1 e 200.");
 
-            let expandedList = [];
-            while(expandedList.length < requestedQty) {
-                let shuffledChunk = [...fullQuestionDatabase].sort(() => Math.random() - 0.5);
-                expandedList = expandedList.concat(shuffledChunk);
+            let baseQuestions = [...fullQuestionDatabase].sort(() => Math.random() - 0.5);
+            
+            if (requestedQty <= baseQuestions.length) {
+                activeQuizQuestions = baseQuestions.slice(0, requestedQty);
+            } else {
+                activeQuizQuestions = [...baseQuestions];
+                const extraNeeded = requestedQty - baseQuestions.length;
+                for (let i = 0; i < extraNeeded; i++) {
+                    activeQuizQuestions.push(generateProceduralQuestion());
+                }
             }
-            activeQuizQuestions = expandedList.slice(0, requestedQty);
             
             lobbyPlayers.forEach(p => p.score = 0);
             playerScore = 0;
             currentIndex = 0;
 
             document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('global-leave-btn').classList.remove('hidden'); // Exibe botão Sair
+            document.getElementById('global-leave-btn').classList.remove('hidden');
             loadRound();
         }
 
@@ -399,7 +455,8 @@
             if(chosenIndex === currentQuestion.c) {
                 const timeSpent = Date.now() - questionOpeningTime;
                 const penaltyRatio = timeSpent / ANSWER_WINDOW_MS;
-                lastPointsGained = Math.max(500, Math.round(1000 * (1 - (penaltyRatio / 2))));
+                let calculatedPoints = Math.round(1000 * (1 - (penaltyRatio / 2)));
+                lastPointsGained = Math.max(500, calculatedPoints);
                 playerScore += lastPointsGained;
                 document.getElementById('round-feedback').textContent = "Você acertou! 🟢";
                 document.getElementById('round-feedback').style.color = "var(--kahoot-green)";
@@ -431,8 +488,6 @@
         }
 
         function processLeaderboardAndShowResults() {
-            const currentQuestion = activeQuizQuestions[currentIndex];
-
             lobbyPlayers.forEach(bot => {
                 const acertou = Math.random() > bot.speed; 
                 if(acertou) {
@@ -441,13 +496,13 @@
                 }
             });
 
-            let standIngs = [
+            let standings = [
                 { name: username, score: playerScore, isMe: true },
                 ...lobbyPlayers.map(b => ({ name: b.name, score: b.score, isMe: false }))
             ];
             
-            standIngs.sort((x, y) => y.score - x.score);
-            let playerRank = standIngs.findIndex(item => item.isMe) + 1;
+            standings.sort((x, y) => y.score - x.score);
+            let playerRank = standings.findIndex(item => item.isMe) + 1;
 
             document.getElementById('points-gained').textContent = `+${lastPointsGained} pontos nesta rodada`;
             document.getElementById('current-rank').textContent = `#${playerRank}`;
@@ -455,7 +510,7 @@
 
             const listContainer = document.getElementById('leaderboard-list');
             listContainer.innerHTML = "";
-            standIngs.forEach((pos, index) => {
+            standings.forEach((pos, index) => {
                 const row = document.createElement('div');
                 row.className = `leaderboard-item ${pos.isMe ? 'player' : ''}`;
                 row.innerHTML = `<span>${index + 1}. ${pos.name}</span> <span>${pos.score} pts</span>`;

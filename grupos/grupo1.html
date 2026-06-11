@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MundoQuiz - O Kahoot da Copa!</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #006400, #002700);
+            --primary-color: #ffcc00;
+            --secondary-color: #002700;
+            --white: #ffffff;
+            --card-red: #e21b3c;
+            --card-blue: #1368ce;
+            --card-yellow: #d89e00;
+            --card-green: #26890c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 2px solid var(--primary-color);
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+
+        h2 { margin-bottom: 20px; }
+
+        .hidden { display: none !important; }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            height: 100px;
+            resize: none;
+            font-family: monospace;
+            background: #f4f4f4;
+            color: #333;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            background-color: #ffe066;
+        }
+
+        /* Botões utilitários de Importação/Exportação */
+        .btn-zone {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-utility {
+            background-color: #1368ce;
+            color: white;
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            margin-top: 0;
+        }
+        .btn-utility:hover { background-color: #0d4fa3; }
+
+        .btn-quit {
+            background-color: #990000;
+            color: white;
+            padding: 5px 15px;
+            font-size: 0.9rem;
+            width: auto;
+            margin-top: 0;
+            border: 1px solid #ff4d4d;
+        }
+        .btn-quit:hover { background-color: var(--card-red); }
+
+        #timer {
+            font-size: 2rem;
+            font-weight: bold;
+            background: var(--white);
+            color: var(--secondary-color);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px auto;
+            border: 4px solid var(--primary-color);
+        }
+
+        #question-text {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .btn-answer {
+            padding: 25px;
+            font-size: 1.2rem;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            font-weight: bold;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn-answer:hover { opacity: 0.9; }
+        .answer-0 { background-color: var(--card-red); }
+        .answer-1 { background-color: var(--card-blue); }
+        .answer-2 { background-color: var(--card-yellow); }
+        .answer-3 { background-color: var(--card-green); }
+
+        .history-list {
+            max-height: 120px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: left;
+            margin-top: 15px;
+        }
+
+        .history-item {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+        }
+
+        .feedback {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        #total-loaded {
+            font-size: 0.9rem;
+            color: #ffcc00;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="screen-start">
+        <h1>🏆 MundoQuiz: Copa do Mundo ⚽</h1>
+        
+        <div class="form-group">
+            <label for="player-name">Nome do Craque:</label>
+            <input type="text" id="player-name" placeholder="Digite seu nome" value="Jogador 1">
+        </div>
+
+        <div class="form-group">
+            <label for="question-count">Quantidade de Perguntas (3 a 40):</label>
+            <input type="number" id="question-count" min="3" max="40" value="5">
+            <div id="total-loaded">Carregando perguntas...</div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+            <label>📦 Gerenciar Perguntas (Sem precisar de arquivos):</label>
+            <div class="btn-zone">
+                <button class="btn-utility" onclick="toggleBackupBox()">📥 Importar Texto JSON</button>
+                <button class="btn-utility" onclick="exportQuestions()">Exportar Perguntas Atuais 📋</button>
+            </div>
+            
+            <div id="backup-box" class="hidden" style="margin-top: 10px;">
+                <textarea id="json-input" placeholder='Cole seu código JSON aqui dentro...'></textarea>
+                <button style="background: #26890c; color: white; padding: 8px; font-size: 0.9rem;" onclick="importQuestionsText()">Confirmar Carga ⚡</button>
+            </div>
+        </div>
+
+        <button id="btn-start" style="font-size: 1.4rem; padding: 15px;">Iniciar Partida! 🚀</button>
+
+        <h3 style="margin-top: 25px; color: var(--primary-color);">📜 Histórico de Partidas</h3>
+        <div class="history-list" id="history-container"></div>
+    </div>
+
+    <div id="screen-game" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span id="progress-text">Pergunta 1/X</span>
+            <button class="btn-quit" onclick="abandonGame()">🏳️ Desistir</button>
+            <span id="score-text">Pontos: 0</span>
+        </div>
+        
+        <div id="timer">20</div>
+        <div id="question-text">Texto da Pergunta</div>
+
+        <div class="answers-grid">
+            <button class="btn-answer answer-0" onclick="selectAnswer(0)"></button>
+            <button class="btn-answer answer-1" onclick="selectAnswer(1)"></button>
+            <button class="btn-answer answer-2" onclick="selectAnswer(2)"></button>
+            <button class="btn-answer answer-3" onclick="selectAnswer(3)"></button>
+        </div>
+    </div>
+
+    <div id="screen-feedback" class="hidden">
+        <div class="feedback" id="feedback-message">Acertou! 🎉</div>
+        <p style="font-size: 1.2rem; margin-bottom: 20px;" id="feedback-detail"></p>
+        <button id="btn-next">Próxima Pergunta ➡️</button>
+    </div>
+
+    <div id="screen-end" class="hidden">
+        <h1 id="end-title">Fim de Jogo! 🏁</h1>
+        <h2 id="final-score">Você fez X pontos!</h2>
+        <p id="final-stats" style="margin-bottom: 30px; font-size: 1.2rem;"></p>
+        <button id="btn-restart">Jogar Novamente 🔄</button>
+    </div>
+</div>
+
+<script>
+    // Perguntas base gravadas de fábrica no código (Caso o seu estoque acabe ou dê erro)
+    let bancoPerguntas = [
+        { "q": "Qual país ganhou a Copa do Mundo de 2022?", "options": ["França", "Argentina", "Brasil", "Marrocos"], "correct": 1 },
+        { "q": "Quem é o maior artilheiro da história das Copas?", "options": ["Pelé", "Ronaldo", "Miroslav Klose", "Messi"], "correct": 2 },
+        { "q": "Quantos títulos de Copa do Mundo o Brasil possui?", "options": ["4", "5", "6", "3"], "correct": 1 },
+        { "q": "Qual país sediou a Copa do Mundo de 2014?", "options": ["África do Sul", "Alemanha", "Rússia", "Brasil"], "correct": 3 },
+        { "q": "Qual seleção venceu a primeira Copa do Mundo em 1930?", "options": ["Uruguai", "Argentina", "Itália", "França"], "correct": 0 }
+    ];
+
+    let gameQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timerInterval;
+    let timeLeft = 20;
+    let playerName = "";
+    let gameAbandoned = false;
+
+    const screenStart = document.getElementById('screen-start');
+    const screenGame = document.getElementById('screen-game');
+    const screenFeedback = document.getElementById('screen-feedback');
+    const screenEnd = document.getElementById('screen-end');
+
+    document.getElementById('btn-start').addEventListener('click', startGame);
+    document.getElementById('btn-next').addEventListener('click', nextQuestion);
+    document.getElementById('btn-restart').addEventListener('click', () => {
+        screenEnd.classList.add('hidden');
+        screenStart.classList.remove('hidden');
+        loadHistory();
+    });
+
+    // Atualiza interface do sistema
+    atualizarContadorPerguntas();
+    loadHistory();
+
+    function atualizarContadorPerguntas() {
+        document.getElementById('total-loaded').innerText = `✅ Total de ${bancoPerguntas.length} perguntas ativas no sistema!`;
+    }
+
+    // Abre e fecha a caixinha de colar texto JSON
+    function toggleBackupBox() {
+        const box = document.getElementById('backup-box');
+        box.classList.toggle('hidden');
+    }
+
+    // 📥 IMPORTAR VIA TEXTO COPIADO
+    function importQuestionsText() {
+        const txtArea = document.getElementById('json-input');
+        try {
+            const parsed = JSON.parse(txtArea.value);
+            if (Array.isArray(parsed) && parsed.length >= 3) {
+                bancoPerguntas = parsed;
+                atualizarContadorPerguntas();
+                alert(`Sucesso! ${parsed.length} novas perguntas foram carregadas de forma instantânea!`);
+                txtArea.value = "";
+                toggleBackupBox();
+            } else {
+                alert("Erro: O JSON deve conter uma lista [] com pelo menos 3 perguntas.");
+            }
+        } catch (e) {
+            alert("Erro de formatação! Certifique-se de que colou o JSON estruturado corretamente.");
+        }
+    }
+
+    // 📤 EXPORTAR VIA ÁREA DE TRANSFERÊNCIA
+    function exportQuestions() {
+        const stringificadas = JSON.stringify(bancoPerguntas, null, 2);
+        navigator.clipboard.writeText(stringificadas).then(() => {
+            alert("📋 O código JSON com as perguntas atuais foi copiado para sua Área de Transferência! Agora é só colar em um bloco de notas para salvar.");
+        }).catch(err => {
+            alert("Erro ao copiar automaticamente. Veja no console.");
+            console.log(stringificadas);
+        });
+    }
+
+    // CONTROLE DO CORE DO JOGO
+    function startGame() {
+        playerName = document.getElementById('player-name').value.trim() || "Jogador Anônimo";
+        let count = parseInt(document.getElementById('question-count').value);
+        gameAbandoned = false;
+
+        if (isNaN(count) || count < 3 || count > 40) {
+            alert("Por favor, selecione uma quantidade entre 3 e 40 perguntas.");
+            return;
+        }
+
+        let shuffled = [...bancoPerguntas].sort(() => 0.5 - Math.random());
+        
+        if (count > shuffled.length) {
+            alert(`O banco de dados possui apenas ${shuffled.length} perguntas no momento. Ajustando para o máximo.`);
+            count = shuffled.length;
+            document.getElementById('question-count').value = count;
+        }
+        
+        gameQuestions = shuffled.slice(0, count);
+        currentQuestionIndex = 0;
+        score = 0;
+
+        screenStart.classList.add('hidden');
+        screenGame.classList.remove('hidden');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        resetTimer();
+        const currentQuestion = gameQuestions[currentQuestionIndex];
+        
+        document.getElementById('progress-text').innerText = `Pergunta ${currentQuestionIndex + 1}/${gameQuestions.length}`;
+        document.getElementById('score-text').innerText = `Pontos: ${score}`;
+        document.getElementById('question-text').innerText = currentQuestion.q;
+
+        const answerButtons = document.querySelectorAll('.btn-answer');
+        answerButtons.forEach((btn, idx) => {
+            btn.innerText = currentQuestion.options[idx] || "";
+            btn.style.display = currentQuestion.options[idx] ? "block" : "none"; 
+        });
+
+        startTimer();
+    }
+
+    function startTimer() {
+        timeLeft = 20;
+        document.getElementById('timer').innerText = timeLeft;
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                selectAnswer(-1);
+            }
+        }, 1000);
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+    }
+
+    function selectAnswer(selectedIndex) {
+        resetTimer();
+        const currentQuestion = gameQuestions[currentQuestionIndex];
+        const isCorrect = selectedIndex === currentQuestion.correct;
+        
+        const msgElement = document.getElementById('feedback-message');
+        const detailElement = document.getElementById('feedback-detail');
+
+        if (isCorrect) {
+            const pointsEarned = 500 + (timeLeft * 25); 
+            score += pointsEarned;
+            msgElement.innerText = "Acertou! ⚽🎉";
+            msgElement.style.color = "#26890c";
+            detailElement.innerText = `Você foi rápido! Ganhou ${pointsEarned} pontos.`;
+        } else if (selectedIndex === -1) {
+            msgElement.innerText = "O tempo acabou! ⏰";
+            msgElement.style.color = "#e21b3c";
+            detailElement.innerText = `A resposta certa era: ${currentQuestion.options[currentQuestion.correct]}`;
+        } else {
+            msgElement.innerText = "Errou! ❌";
+            msgElement.style.color = "#e21b3c";
+            detailElement.innerText = `A resposta certa era: ${currentQuestion.options[currentQuestion.correct]}`;
+        }
+
+        screenGame.classList.add('hidden');
+        screenFeedback.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        screenFeedback.classList.add('hidden');
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex < gameQuestions.length) {
+            screenGame.classList.remove('hidden');
+            showQuestion();
+        } else {
+            endGame();
+        }
+    }
+
+    function abandonGame() {
+        if (confirm("Quer mesmo abandonar a partida? Seus pontos atuais serão salvos!")) {
+            gameAbandoned = true;
+            resetTimer();
+            endGame();
+        }
+    }
+
+    function endGame() {
+        screenGame.classList.add('hidden');
+        screenFeedback.classList.add('hidden');
+        screenEnd.classList.remove('hidden');
+
+        const endTitle = document.getElementById('end-title');
+        if (gameAbandoned) {
+            endTitle.innerText = "Substituído! 🏃‍♂️💨";
+            document.getElementById('final-stats').innerText = `${playerName} cansou de correr e pediu pra sair de campo na pergunta ${currentQuestionIndex + 1}.`;
+        } else {
+            endTitle.innerText = "Fim de Jogo! 🏁";
+            document.getElementById('final-stats').innerText = `Parabéns ${playerName}, você concluiu o quiz até o apito final!`;
+        }
+
+        document.getElementById('final-score').innerText = `Você fez ${score} pontos!`;
+        saveHistory(playerName, score, gameAbandoned ? "Desistiu" : "Concluiu");
+    }
+
+    // Histórico no LocalStorage do Navegador
+    function saveHistory(name, finalScore, status) {
+        let history = JSON.parse(localStorage.getItem('quiz_history')) || [];
+        const date = new Date().toLocaleDateString('pt-BR');
+        history.unshift({ name, score: finalScore, date, status });
+        localStorage.setItem('quiz_history', JSON.stringify(history));
+    }
+
+    function loadHistory() {
+        const container = document.getElementById('history-container');
+        let history = JSON.parse(localStorage.getItem('quiz_history')) || [];
+        
+        if (history.length === 0) {
+            container.innerHTML = "<div class='history-item'>Nenhuma partida registrada ainda.</div>";
+            return;
+        }
+
+        container.innerHTML = history.map(item => `
+            <div class="history-item">
+                <strong>${item.name}</strong> - ${item.score} pts em ${item.date} (${item.status || 'Concluiu'})
+            </div>
+        `).join('');
+    }
+</script>
+</body>
+</html>

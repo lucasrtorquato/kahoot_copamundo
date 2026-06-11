@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kahoot da Copa do Mundo!</title>
+  <style>
+    /* --- CSS ESTILIZAÇÃO --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #46178f; /* Roxo clássico do Kahoot */
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .kahoot-container {
+      background-color: #f2f2f2;
+      width: 100%;
+      max-width: 900px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      padding: 30px;
+      min-height: 500px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Gerenciamento de Telas */
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* Tela Inicial */
+    .logo {
+      font-size: 3rem;
+      color: #46178f;
+      margin-bottom: 10px;
+    }
+    .logo span {
+      color: #e21b3c;
+      display: block;
+      font-size: 1.8rem;
+    }
+
+    .opcoes-qtd {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-qtd, #btn-reiniciar, #btn-proxima {
+      background-color: #333;
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.1s, background-color 0.2s;
+    }
+
+    .btn-qtd:hover, #btn-reiniciar:hover, #btn-proxima:hover {
+      transform: scale(1.05);
+      background-color: #555;
+    }
+
+    /* Tela de Jogo */
+    .header-jogo {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #666;
+      align-items: center;
+    }
+
+    #cronometro {
+      background-color: #333;
+      color: white;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .caixa-pergunta {
+      background-color: white;
+      width: 100%;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+    }
+
+    .grade-respostas {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      width: 100%;
+    }
+
+    @media (max-width: 600px) {
+      .grade-respostas {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .btn-resposta {
+      border: none;
+      border-radius: 6px;
+      padding: 20px;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+      transition: opacity 0.2s;
+    }
+
+    .btn-resposta:active {
+      transform: translateY(4px);
+      box-shadow: none;
+    }
+
+    .btn-resposta .forma {
+      font-size: 1.5rem;
+      margin-right: 15px;
+    }
+
+    /* Cores das respostas estilo Kahoot */
+    .vermelho { background-color: #e21b3c; }
+    .azul { background-color: #1368ce; }
+    .amarelo { background-color: #d89e00; }
+    .verde { background-color: #26890c; }
+
+    /* Classes de validação */
+    .btn-resposta.correto {
+      background-color: #26890c !important;
+      opacity: 1 !important;
+    }
+
+    .btn-resposta.errado {
+      background-color: #e21b3c !important;
+    }
+
+    .btn-resposta.desabilitado {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    /* Controles */
+    .controles-jogo {
+      margin-top: 25px;
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    #btn-proxima {
+      background-color: #1368ce;
+    }
+
+    .escondido {
+      display: none !important;
+    }
+
+    /* Tela Final */
+    .placar {
+      font-size: 1.5rem;
+      margin: 30px 0;
+    }
+    #pontos-finais {
+      font-weight: bold;
+      color: #26890c;
+      font-size: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="kahoot-container">
+    <div id="tela-inicial" class="screen active">
+      <h1 class="logo">Kahoot! <span>Copa do Mundo</span></h1>
+      <p>Escolha quantas perguntas deseja responder para iniciar o desafio:</p>
+      <div class="opcoes-qtd">
+        <button class="btn-qtd" data-qtd="5">Curto (5 perguntas)</button>
+        <button class="btn-qtd" data-qtd="12">Médio (12 perguntas)</button>
+        <button class="btn-qtd" data-qtd="18">Longo (18 perguntas)</button>
+      </div>
+    </div>
+
+    <div id="tela-jogo" class="screen">
+      <div class="header-jogo">
+        <div id="progresso">Pergunta 1 de X</div>
+        <div id="cronometro">20</div>
+      </div>
+      
+      <div class="caixa-pergunta">
+        <h2 id="texto-pergunta">Carregando pergunta...</h2>
+      </div>
+
+      <div class="grade-respostas">
+        <button class="btn-resposta vermelho" data-idx="0">
+          <span class="forma">▲</span> <span class="texto-opcao">Opção 1</span>
+        </button>
+        <button class="btn-resposta azul" data-idx="1">
+          <span class="forma">◆</span> <span class="texto-opcao">Opção 2</span>
+        </button>
+        <button class="btn-resposta amarelo" data-idx="2">
+          <span class="forma">●</span> <span class="texto-opcao">Opção 3</span>
+        </button>
+        <button class="btn-resposta verde" data-idx="3">
+          <span class="forma">■</span> <span class="texto-opcao">Opção 4</span>
+        </button>
+      </div>
+
+      <div class="controles-jogo">
+        <button id="btn-proxima" class="escondido">Avançar</button>
+      </div>
+    </div>
+
+    <div id="tela-final" class="screen">
+      <h2>Fim de Jogo!</h2>
+      <div class="placar">
+        <p>Você acertou <span id="pontos-finais">0</span> de <span id="total-finais">0</span> perguntas!</p>
+      </div>
+      <button id="btn-reiniciar">Jogar Novamente</button>
+    </div>
+  </div>
+
+  <script>
+    // --- JAVASCRIPT & ENTRADA JSON ---
+    // Simulando a importação do JSON diretamente em uma String JSON estruturada
+    const dadosJsonPerguntas = `[
+      {
+        "pergunta": "Qual país ganhou a primeira Copa do Mundo em 1930?",
+        "opcoes": ["Brasil", "Argentina", "Uruguai", "Itália"],
+        "correta": 2
+      },
+      {
+        "pergunta": "Quantas Copas do Mundo o Brasil possui?",
+        "opcoes": ["4", "5", "6", "3"],
+        "correta": 1
+      },
+      {
+        "pergunta": "Quem é o maior artilheiro da história das Copas do Mundo?",
+        "opcoes": ["Miroslav Klose", "Ronaldo Nazário", "Pelé", "Just Fontaine"],
+        "correta": 0
+      },
+      {
+        "pergunta": "Em qual Copa do Mundo Maradona marcou o gol 'Mão de Deus'?",
+        "opcoes": ["Espanha 1982", "México 1986", "Itália 1990", "EUA 1994"],
+        "correta": 1
+      },
+      {
+        "pergunta": "Qual país sediou a Copa do Mundo de 2010?",
+        "opcoes": ["Alemanha", "Brasil", "África do Sul", "França"],
+        "correta": 2
+      },
+      {
+        "pergunta": "Quem foi o campeão da Copa do Mundo de 2022?",
+        "opcoes": ["França", "Croácia", "Marrocos", "Argentina"],
+        "correta": 3
+      },
+      {
+        "pergunta": "Qual jogador detém o recorde de mais Copas do Mundo vencidas?",
+        "opcoes": ["Cafu", "Pelé", "Maradona", "Zidane"],
+        "correta": 1
+      },
+      {
+        "pergunta": "Qual seleção perdeu três finais de Copa sem nunca ter vencido nenhuma?",
+        "opcoes": ["Holanda (Países Baixos)", "Hungria", "Suécia", "Tchecoslováquia"],
+        "correta": 0
+      },
+      {
+        "pergunta": "Qual goleiro ficou conhecido por defender quatro pênaltis na Copa de 1990?",
+        "opcoes": ["Taffarel", "Sergio Goycochea", "Walter Zenga", "Oliver Kahn"],
+        "correta": 1
+      },
+      {
+        "pergunta": "Em qual Copa do Mundo foi utilizada a tecnologia do VAR pela primeira vez?",
+        "opcoes": ["Brasil 2014", "Rússia 2018", "Catar 2022", "África do Sul 2010"],
+        "correta": 1
+      },
+      {
+        "pergunta": "Qual país africano foi o primeiro a chegar a uma semifinal de Copa do Mundo?",
+        "opcoes": ["Camarões", "Senegal", "Gana", "Marrocos"],
+        "correta": 3
+      },
+      {
+        "pergunta": "Qual foi o placar da semifinal entre Brasil e Alemanha em 2014?",
+        "opcoes": ["5 a 1", "7 a 1", "6 a 0", "4 a 1"],
+        "correta": 1
+      },
+      {
+        "pergunta": "Quem marcou o gol do título da Alemanha na final da Copa de 2014?",
+        "opcoes": ["Thomas Müller", "Miroslav Klose", "Mario Götze", "Mesut Özil"],
+        "correta": 2
+      },
+      {
+        "pergunta": "Qual jogador marcou três gols (hat-trick) na final da Copa de 2022?",
+        "opcoes": ["Lionel Messi", "Kylian Mbappé", "Ángel Di María", "Olivier Giroud"],
+        "correta": 1
+      },
+      {
+        "pergunta": "Qual país jogou o maior número de finais de Copa do Mundo?",
+        "opcoes": ["Brasil", "Alemanha", "Itália", "Argentina"],
+        "correta": 1
+      },
+      {
+        "pergunta": "Quem foi o técnico que comandou o Brasil no pentacampeonato em 2002?",
+        "opcoes": ["Zagallo", "Carlos Alberto Parreira", "Luiz Felipe Scolari", "Tite"],
+        "correta": 2
+      },
+      {
+        "pergunta": "Qual dessas seleções NUNCA venceu uma Copa do Mundo?",
+        "opcoes": ["Espanha", "Inglaterra", "França", "Portugal"],
+        "correta": 3
+      },
+      {
+        "pergunta": "Em qual Copa o mundo viu a estreia de Pelé com apenas 17 anos?",
+        "opcoes": ["Suíça 1954", "Suécia 1958", "Chile 1962", "México 1970"],
+        "correta": 1
+      }
+    ]`;
+
+    // Fazendo o "Parse" (Importação) dos dados JSON convertendo em Objeto JS
+    const bancoDePerguntas = JSON.parse(dadosJsonPerguntas);
+
+    let perguntasDoJogo = [];
+    let indicePerguntaAtual = 0;
+    let pontuacao = 0;
+    let tempoRestante = 20;
+    let intervaloCronometro = null;
+    let respondeu = false;
+
+    // Elementos do DOM
+    const telaInicial = document.getElementById('tela-inicial');
+    const telaJogo = document.getElementById('tela-jogo');
+    const telaFinal = document.getElementById('tela-final');
+
+    const textoPergunta = document.getElementById('texto-pergunta');
+    const botoesResposta = document.querySelectorAll('.btn-resposta');
+    const textoProgresso = document.getElementById('progresso');
+    const exibicaoCronometro = document.getElementById('cronometro');
+    const btnProxima = document.getElementById('btn-proxima');
+
+    // Inicialização dos eventos de escolha de quantidade
+    document.querySelectorAll('.btn-qtd').forEach(botao => {
+      botao.addEventListener('click', (e) => {
+        const qtdEscolhida = parseInt(e.target.getAttribute('data-qtd'));
+        iniciarJogo(qtdEscolhida);
+      });
+    });
+
+    function iniciarJogo(quantidade) {
+      // 1. Embaralha o banco total de perguntas para dinâmica randômica
+      const perguntasEmbaralhadas = [...bancoDePerguntas].sort(() => Math.random() - 0.5);
+      
+      // 2. Filtra o array baseado no tamanho escolhido pelo usuário (5, 12 ou 18)
+      perguntasDoJogo = perguntasEmbaralhadas.slice(0, quantidade);
+      
+      // Reset de estados
+      indicePerguntaAtual = 0;
+      pontuacao = 0;
+      
+      // Transição de telas
+      telaInicial.classList.remove('active');
+      telaJogo.classList.add('active');
+      
+      carregarRodada();
+    }
+
+    function carregarRodada() {
+      respondeu = false;
+      btnProxima.classList.add('escondido');
+      tempoRestante = 20;
+      exibicaoCronometro.innerText = tempoRestante;
+      
+      const dadosPergunta = perguntasDoJogo[indicePerguntaAtual];
+      
+      // Atualiza painéis textuais
+      textoProgresso.innerText = `Pergunta ${indicePerguntaAtual + 1} de ${perguntasDoJogo.length}`;
+      textoPergunta.innerText = dadosPergunta.pergunta;
+      
+      // Vincula dados e cliques aos botões
+      botoesResposta.forEach((botao, index) => {
+        botao.className = `btn-resposta ${obterCorOriginal(index)}`; // Limpa feedbacks anteriores
+        botao.querySelector('.texto-opcao').innerText = dadosPergunta.opcoes[index];
+        botao.onclick = () => verificarResposta(index);
+      });
+      
+      // Configuração e disparo do Timer
+      clearInterval(intervaloCronometro);
+      intervaloCronometro = setInterval(atualizarCronometro, 1000);
+    }
+
+    function atualizarCronometro() {
+      tempoRestante--;
+      exibicaoCronometro.innerText = tempoRestante;
+      
+      if (tempoRestante <= 0) {
+        clearInterval(intervaloCronometro);
+        bloquearRespostasTimeout();
+      }
+    }
+
+    function verificarResposta(indiceSelecionado) {
+      if (respondeu) return;
+      respondeu = true;
+      clearInterval(intervaloCronometro);
+      
+      const indiceCorreto = perguntasDoJogo[indicePerguntaAtual].correta;
+      
+      botoesResposta.forEach((botao, index) => {
+        botao.classList.add('desabilitado');
+        if (index === indiceCorreto) {
+          botao.classList.add('correto');
+        }
+      });
+      
+      if (indiceSelecionado === indiceCorreto) {
+        pontuacao++;
+      } else {
+        botoesResposta[indiceSelecionado].classList.add('errado');
+      }
+      
+      btnProxima.classList.remove('escondido');
+    }
+
+    function bloquearRespostasTimeout() {
+      respondeu = true;
+      const indiceCorreto = perguntasDoJogo[indicePerguntaAtual].correta;
+      
+      botoesResposta.forEach((botao, index) => {
+        botao.classList.add('desabilitado');
+        if (index === indiceCorreto) {
+          botao.classList.add('correto');
+        }
+      });
+      
+      btnProxima.classList.remove('escondido');
+    }
+
+    function obterCorOriginal(index) {
+      const cores = ['vermelho', 'azul', 'amarelo', 'verde'];
+      return cores[index];
+    }
+
+    // Controle do botão avançar
+    btnProxima.addEventListener('click', () => {
+      indicePerguntaAtual++;
+      if (indicePerguntaAtual < perguntasDoJogo.length) {
+        carregarRodada();
+      } else {
+        finalizarJogo();
+      }
+    });
+
+    function finalizarJogo() {
+      telaJogo.classList.remove('active');
+      telaFinal.classList.add('active');
+      
+      document.getElementById('pontos-finais').innerText = pontuacao;
+      document.getElementById('total-finais').innerText = perguntasDoJogo.length;
+    }
+
+    // Reinicialização do Game Loop
+    document.getElementById('btn-reiniciar').addEventListener('click', () => {
+      telaFinal.classList.remove('active');
+      telaInicial.classList.add('active');
+    });
+  </script>
+</body>
+</html>

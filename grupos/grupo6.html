@@ -22,15 +22,7 @@ body{
   z-index:-1;
 }
 
-h1{
-  margin-top:20px;
-  animation:pop .8s ease;
-}
-
-@keyframes pop{
-  from{transform:scale(.5)}
-  to{transform:scale(1)}
-}
+h1{ margin-top:20px; }
 
 input,select,button{
   padding:10px;
@@ -61,7 +53,6 @@ button:hover{transform:scale(1.05)}
   border-radius:15px;
   background:rgba(255,255,255,.15);
   cursor:pointer;
-  transition:.2s;
 }
 
 .card:hover{
@@ -69,7 +60,6 @@ button:hover{transform:scale(1.05)}
   background:rgba(255,255,255,.3);
 }
 
-/* TIMER BAR */
 #bar{
   height:10px;
   width:100%;
@@ -78,7 +68,6 @@ button:hover{transform:scale(1.05)}
   border-radius:5px;
 }
 
-/* PAINÉIS */
 .panel{
   margin:10px auto;
   width:90%;
@@ -88,7 +77,6 @@ button:hover{transform:scale(1.05)}
   border-radius:15px;
 }
 
-/* RESULTADO FINAL */
 .resultBox{
   background:rgba(0,0,0,.5);
   padding:20px;
@@ -126,7 +114,7 @@ button:hover{transform:scale(1.05)}
     </select>
 
     🎮 Perguntas:
-    <input id="qtd" type="number" value="5" min="1">
+    <input id="qtd" type="number" value="15" min="1" max="15">
   </div>
 
   <h2 id="question"></h2>
@@ -138,7 +126,8 @@ button:hover{transform:scale(1.05)}
   <div class="panel">
     <button onclick="prev()">⏪ Voltar</button>
     <button onclick="togglePause()">⏸ / ▶</button>
-    <button onclick="savePDF()">📄 Salvar PDF</button>
+    <button onclick="savePDF()">📄 PDF</button>
+    <button onclick="exportJSON()">⬇ JSON</button>
   </div>
 
   <div id="result"></div>
@@ -147,8 +136,60 @@ button:hover{transform:scale(1.05)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
+
 /* =========================
-   QUIZ PREMIUM FINAL
+   BANCO DE PERGUNTAS (15)
+========================= */
+
+const bank = [
+  { q:"Qual país venceu a primeira Copa do Mundo da FIFA?",
+    a:[{t:"Brasil",c:false},{t:"Alemanha",c:false},{t:"Uruguai",c:true},{t:"Argentina",c:false}] },
+
+  { q:"Quantas Copas o Brasil ganhou?",
+    a:[{t:"3",c:false},{t:"4",c:false},{t:"5",c:true},{t:"6",c:false}] },
+
+  { q:"Em que ano o Brasil ganhou sua primeira Copa?",
+    a:[{t:"1950",c:false},{t:"1954",c:false},{t:"1958",c:true},{t:"1962",c:false}] },
+
+  { q:"Quem venceu a Copa 2022?",
+    a:[{t:"França",c:false},{t:"Brasil",c:false},{t:"Argentina",c:true},{t:"Croácia",c:false}] },
+
+  { q:"Quem é o Rei do Futebol?",
+    a:[{t:"Neymar",c:false},{t:"Romário",c:false},{t:"Ronaldo",c:false},{t:"Pelé",c:true}] },
+
+  { q:"Sede da Copa 2014?",
+    a:[{t:"África do Sul",c:false},{t:"Brasil",c:true},{t:"Rússia",c:false},{t:"Alemanha",c:false}] },
+
+  { q:"Brasil 7x1 foi contra quem?",
+    a:[{t:"França",c:false},{t:"Alemanha",c:true},{t:"Argentina",c:false},{t:"Espanha",c:false}] },
+
+  { q:"Jogadores por time?",
+    a:[{t:"9",c:false},{t:"10",c:false},{t:"11",c:true},{t:"12",c:false}] },
+
+  { q:"Copa 2022 foi onde?",
+    a:[{t:"Japão",c:false},{t:"Catar",c:true},{t:"EUA",c:false},{t:"China",c:false}] },
+
+  { q:"Mais Copas?",
+    a:[{t:"Alemanha",c:false},{t:"Itália",c:false},{t:"Argentina",c:false},{t:"Brasil",c:true}] },
+
+  { q:"Final 2002 quem marcou 2 gols?",
+    a:[{t:"Ronaldinho",c:false},{t:"Rivaldo",c:false},{t:"Ronaldo",c:true},{t:"Cafu",c:false}] },
+
+  { q:"Qual nunca ganhou Copa?",
+    a:[{t:"Espanha",c:false},{t:"Inglaterra",c:false},{t:"Holanda",c:true},{t:"França",c:false}] },
+
+  { q:"Primeira Copa foi em?",
+    a:[{t:"1928",c:false},{t:"1930",c:true},{t:"1934",c:false},{t:"1940",c:false}] },
+
+  { q:"Quem organiza a Copa?",
+    a:[{t:"FIFA",c:true},{t:"UEFA",c:false},{t:"CONMEBOL",c:false},{t:"IOC",c:false}] },
+
+  { q:"Outro país com 4 títulos?",
+    a:[{t:"Alemanha",c:false},{t:"Itália",c:true},{t:"Argentina",c:false},{t:"França",c:false}] }
+];
+
+/* =========================
+   VARIÁVEIS
 ========================= */
 
 let player="";
@@ -160,26 +201,9 @@ let interval;
 
 let ranking = JSON.parse(localStorage.getItem("ranking") || "{}");
 
-const bank=[
-  {q:"Quem ganhou a Copa 2022?",a:[
-    {t:"França",c:false},
-    {t:"Argentina",c:true},
-    {t:"Brasil",c:false},
-    {t:"Alemanha",c:false}
-  ]},
-  {q:"Onde foi a Copa 2018?",a:[
-    {t:"Brasil",c:false},
-    {t:"Rússia",c:true},
-    {t:"EUA",c:false},
-    {t:"Portugal",c:false}
-  ]},
-  {q:"Quantos jogadores em campo?",a:[
-    {t:"9",c:false},
-    {t:"10",c:false},
-    {t:"11",c:true},
-    {t:"12",c:false}
-  ]}
-];
+/* =========================
+   INÍCIO
+========================= */
 
 function join(){
   player=document.getElementById("name").value;
@@ -197,9 +221,12 @@ function start(){
 
   index=0;
   score=0;
-
   show();
 }
+
+/* =========================
+   MOSTRAR PERGUNTA
+========================= */
 
 function show(){
   if(index>=questions.length){
@@ -208,7 +235,7 @@ function show(){
   }
 
   const q=questions[index];
-  document.getElementById("question").innerText=q.q+" ⚽";
+  document.getElementById("question").innerText=q.q;
 
   const box=document.getElementById("answers");
   box.innerHTML="";
@@ -230,6 +257,10 @@ function show(){
   timer();
 }
 
+/* =========================
+   TIMER
+========================= */
+
 function timer(){
   clearInterval(interval);
 
@@ -250,7 +281,10 @@ function timer(){
   },1000);
 }
 
-/* CONTROLES */
+/* =========================
+   CONTROLES
+========================= */
+
 function togglePause(){
   paused=!paused;
 }
@@ -262,53 +296,71 @@ function prev(){
   }
 }
 
-/* FINAL + RANKING */
+/* =========================
+   FINAL
+========================= */
+
 function finish(){
   ranking[player]=score;
   localStorage.setItem("ranking",JSON.stringify(ranking));
 
-  let arr=Object.entries(ranking)
-    .sort((a,b)=>b[1]-a[1]);
+  let arr=Object.entries(ranking).sort((a,b)=>b[1]-a[1]);
 
-  document.getElementById("result").innerHTML=
-  `
+  document.getElementById("result").innerHTML=`
   <div class="resultBox">
-    <h2>🏆 Resultado Final</h2>
+    <h2>🏆 Resultado</h2>
     <p>${player}: ${score} pontos</p>
 
-    <h3>📊 Ranking</h3>
+    <h3>Ranking</h3>
     <div class="rank">
       ${arr.map(p=>`⚽ ${p[0]} - ${p[1]}`).join("<br>")}
     </div>
-  </div>
-  `;
+  </div>`;
 }
 
-/* 📄 PDF PROFISSIONAL */
+/* =========================
+   PDF
+========================= */
+
 function savePDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  doc.setFontSize(18);
-  doc.text("🏆 Copa Quiz Premium", 10, 10);
+  doc.text("Copa Quiz Premium",10,10);
+  doc.text("Jogador: "+player,10,20);
+  doc.text("Score: "+score,10,30);
 
-  doc.setFontSize(12);
-  doc.text("Jogador: " + player, 10, 25);
-  doc.text("Pontuação: " + score, 10, 35);
-  doc.text("Perguntas respondidas: " + index, 10, 45);
+  let y=50;
+  Object.entries(ranking).forEach(p=>{
+    doc.text(`${p[0]} - ${p[1]}`,10,y);
+    y+=10;
+  });
 
-  doc.text("Ranking Global:", 10, 60);
-
-  let y=70;
-  Object.entries(ranking)
-    .sort((a,b)=>b[1]-a[1])
-    .forEach(p=>{
-      doc.text(`${p[0]} - ${p[1]}`,10,y);
-      y+=10;
-    });
-
-  doc.save("copa-quiz-premium.pdf");
+  doc.save("quiz.pdf");
 }
+
+/* =========================
+   JSON EXPORT
+========================= */
+
+function exportJSON(){
+  const data={
+    title:"Copa Quiz Premium",
+    total:bank.length,
+    quiz:bank
+  };
+
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="quiz.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
 </script>
 
 </body>
