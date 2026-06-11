@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FutQuiz - Copa do Mundo</title>
+    <style>
+        :root {
+            --primary: #006437; /* Verde Brasil */
+            --secondary: #FFD700; /* Ouro Troféu */
+            --accent: #002776; /* Azul */
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
+
+        body {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('https://images.unsplash.com/photo-1543351611-58f69d7c1781?q=80&w=1920') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--white);
+        }
+
+        /* Botão de Engrenagem Superior Direito */
+        #gear-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: 0.3s;
+            z-index: 100;
+        }
+        #gear-btn:hover { transform: rotate(90deg); background: rgba(255, 255, 255, 0.4); }
+        #gear-btn svg { fill: var(--white); width: 35px; height: 35px; }
+
+        /* Container Principal */
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h1 { color: var(--secondary); font-size: 3rem; margin-bottom: 20px; text-shadow: 2px 2px 5px #000; }
+
+        .screen { display: none; }
+        .active { display: block; }
+
+        /* Estilo dos Inputs */
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: none;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        /* Alerta visual para campos vazios */
+        .input-error {
+            border: 2px solid #ff4747 !important;
+            box-shadow: 0 0 10px rgba(255, 71, 71, 0.5);
+        }
+
+        button.main-btn {
+            background: var(--secondary);
+            color: var(--primary);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: 0.2s;
+        }
+        button.main-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        /* Layout do Quiz */
+        .question-text { font-size: 1.5rem; margin-bottom: 30px; font-weight: bold; }
+        .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .answer-btn {
+            padding: 20px;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            text-align: center;
+        }
+        
+        /* Cores iniciais estilo Kahoot */
+        .answer-btn.color-0 { background: #e21b3c; }
+        .answer-btn.color-1 { background: #1368ce; }
+        .answer-btn.color-2 { background: #d89e00; }
+        .answer-btn.color-3 { background: #26890c; }
+        
+        .answer-btn:hover:not(:disabled) { opacity: 0.8; transform: translateY(-3px); }
+
+        /* Classes de Feedback Visual */
+        .answer-btn.correct-feedback {
+            background-color: #26890c !important; 
+            border: 3px solid white;
+            opacity: 1 !important;
+        }
+        .answer-btn.wrong-feedback {
+            background-color: #e21b3c !important; 
+            opacity: 1 !important;
+        }
+        .answer-btn:disabled:not(.correct-feedback):not(.wrong-feedback) {
+            opacity: 0.3;
+        }
+
+        /* Modal JSON */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center; align-items: center; z-index: 200;
+        }
+        .modal-content { background: #222; padding: 30px; border-radius: 15px; width: 80%; max-width: 500px; }
+        textarea { width: 100%; height: 200px; background: #333; color: #0f0; padding: 10px; font-family: monospace; }
+
+        .score-bar { margin-top: 20px; color: var(--secondary); font-size: 1.2rem; }
+        #timer { font-size: 1.5rem; font-weight: bold; color: #ff4747; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <button id="gear-btn" onclick="openModal()">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+    </button>
+
+    <div class="container">
+        <div id="setup-screen" class="screen active">
+            <h1>FutQuiz ⚽</h1>
+            <input type="text" id="user-name" placeholder="Digite seu apelido..." required>
+            
+            <p style="margin-top: 15px;" id="range-info">Quantas perguntas deseja responder? (Máximo: 50)</p>
+            <input type="number" id="question-count" min="1" max="50" placeholder="Ex: 5" required style="width: 150px;">
+            
+            <button class="main-btn" onclick="startGame()">COMEÇAR JOGO</button>
+        </div>
+
+        <div id="quiz-screen" class="screen">
+            <div id="timer">Tempo: 20s</div>
+            <div class="question-text" id="question-text">Pergunta aqui...</div>
+            <div class="answers-grid" id="answers-grid"></div>
+            <div class="score-bar" id="current-score">Pontos: 0</div>
+        </div>
+
+        <div id="result-screen" class="screen">
+            <h2 id="congrats-msg">Parabéns!</h2>
+            <p id="final-result" style="font-size: 1.4rem; margin: 20px 0;"></p>
+            <button class="main-btn" onclick="location.reload()">JOGAR NOVAMENTE</button>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: var(--secondary); margin-bottom: 10px;">Importar Perguntas JSON</h3>
+            <textarea id="json-input" placeholder='[{"question": "Exemplo?", "answers": ["A", "B", "C", "D"], "correct": 0}]'></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="main-btn" style="background:#555; color: white;" onclick="closeModal()">Cancelar</button>
+                <button class="main-btn" onclick="importJSON()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Banco de dados padrão estendido
+        let database = [
+            { question: "Qual país venceu a primeira Copa em 1930?", answers: ["Uruguai", "Brasil", "Argentina", "Itália"], correct: 0 },
+            { question: "Quem é o maior artilheiro da história das Copas?", answers: ["Pelé", "Ronaldo", "Klose", "Messi"], correct: 2 },
+            { question: "Quantas Copas o Brasil tem?", answers: ["4", "5", "6", "3"], correct: 1 },
+            { question: "Em qual Copa o Maradona fez o gol da 'Mão de Deus'?", answers: ["1982", "1990", "1986", "1978"], correct: 2 },
+            { question: "Qual país sediou a Copa de 2010?", answers: ["Alemanha", "França", "África do Sul", "Japão"], correct: 2 },
+            { question: "Quem foi o campeão da Copa de 2022?", answers: ["França", "Argentina", "Croácia", "Marrocos"], correct: 1 },
+            { question: "Qual jogador venceu 3 Copas do Mundo?", answers: ["Maradona", "Cafu", "Pelé", "Zidane"], correct: 2 },
+            { question: "Em qual país aconteceu a Copa de 1950?", answers: ["Uruguai", "Brasil", "Suíça", "Suécia"], correct: 1 },
+            { question: "Quem era o goleiro do Brasil no Tetra em 1994?", answers: ["Taffarel", "Marcos", "Dida", "Zetti"], correct: 0 },
+            { question: "Qual seleção foi eliminada sem sofrer gols em 2006?", answers: ["Brasil", "Suíça", "Portugal", "França"], correct: 1 }
+        ];
+
+        let gameQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let playerName = "";
+        
+        let timerInterval;
+        let timeLeft = 20;
+
+        function updateLimits() {
+            const inputCount = document.getElementById('question-count');
+            // O máximo absoluto permitido pelo sistema é 50 ou o tamanho do banco atual (o menor entre eles)
+            let maxAllowed = Math.min(50, database.length);
+            
+            inputCount.max = maxAllowed;
+            document.getElementById('range-info').innerText = `Quantas perguntas deseja responder? (Disponíveis: 1 a ${maxAllowed})`;
+        }
+
+        updateLimits();
+
+        function startGame() {
+            const nameInput = document.getElementById('user-name');
+            const countInput = document.getElementById('question-count');
+            
+            // Remove marcações de erro anteriores
+            nameInput.classList.remove('input-error');
+            countInput.classList.remove('input-error');
+
+            let valid = true;
+
+            // Validação de Apelido preenchido
+            if (!nameInput.value.trim()) {
+                nameInput.classList.add('input-error');
+                valid = false;
+            }
+
+            // Validação de Quantidade de Perguntas preenchida e válida
+            let count = parseInt(countInput.value);
+            let maxAllowed = Math.min(50, database.length);
+
+            if (isNaN(count) || count < 1 || count > maxAllowed) {
+                countInput.classList.add('input-error');
+                valid = false;
+            }
+
+            if (!valid) {
+                alert("Por favor, preencha seu apelido e insira uma quantidade válida de perguntas!");
+                return;
+            }
+
+            playerName = nameInput.value;
+            
+            // Esconde permanentemente a engrenagem durante a partida
+            document.getElementById('gear-btn').style.display = 'none';
+
+            // Seleção embaralhada das questões
+            let shuffled = [...database].sort(() => 0.5 - Math.random());
+            gameQuestions = shuffled.slice(0, count);
+
+            showScreen('quiz-screen');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            let q = gameQuestions[currentIndex];
+            document.getElementById('question-text').innerText = q.question;
+            const grid = document.getElementById('answers-grid');
+            grid.innerHTML = "";
+
+            q.answers.forEach((text, i) => {
+                const btn = document.createElement('button');
+                btn.className = `answer-btn color-${i}`;
+                btn.innerText = text;
+                btn.onclick = () => checkAnswer(i);
+                grid.appendChild(btn);
+            });
+
+            timeLeft = 20;
+            document.getElementById('timer').innerText = `Tempo: ${timeLeft}s`;
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `Tempo: ${timeLeft}s`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    revealCorrectAnswerDueToTimeout();
+                }
+            }, 1000);
+        }
+
+        function revealCorrectAnswerDueToTimeout() {
+            const q = gameQuestions[currentIndex];
+            const buttons = document.querySelectorAll('.answer-btn');
+            
+            buttons.forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === q.correct) {
+                    btn.classList.add('correct-feedback');
+                }
+            });
+
+            setTimeout(nextQuestion, 3000);
+        }
+
+        function checkAnswer(idx) {
+            clearInterval(timerInterval);
+            const q = gameQuestions[currentIndex];
+            const buttons = document.querySelectorAll('.answer-btn');
+
+            buttons.forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === q.correct) {
+                    btn.classList.add('correct-feedback');
+                } else if (i === idx) {
+                    btn.classList.add('wrong-feedback');
+                }
+            });
+
+            if(idx === q.correct) {
+                score++;
+                document.getElementById('current-score').innerText = `Pontos: ${score}`;
+            }
+
+            setTimeout(nextQuestion, 2000);
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if(currentIndex < gameQuestions.length) {
+                loadQuestion();
+            } else {
+                finishGame();
+            }
+        }
+
+        function finishGame() {
+            clearInterval(timerInterval);
+            showScreen('result-screen');
+            document.getElementById('congrats-msg').innerText = `Fim de Jogo, ${playerName}!`;
+            document.getElementById('final-result').innerText = `Você acertou ${score} de ${gameQuestions.length} perguntas.`;
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function openModal() { document.getElementById('modal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        function importJSON() {
+            try {
+                const raw = document.getElementById('json-input').value;
+                const parsed = JSON.parse(raw);
+                if(Array.isArray(parsed) && parsed.length > 0) {
+                    database = parsed;
+                    updateLimits();
+                    alert("Banco de perguntas atualizado com sucesso!");
+                    closeModal();
+                } else {
+                    alert("Formato inválido. Use uma lista [].");
+                }
+            } catch(e) {
+                alert("Erro no JSON: Verifique a sintaxe.");
+            }
+        }
+    </script>
+</body>
+</html>
