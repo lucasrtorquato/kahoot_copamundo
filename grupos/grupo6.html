@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kahoot da Copa do Mundo - Edição Neymar Jr</title>
+    
+    <style>
+        /* ==========================================
+           ESTILIZAÇÃO (CSS COM TEMA NEYMAR)
+           ========================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Fundo temático com foto marcante do Neymar na Seleção */
+            background: linear-gradient(rgba(0, 30, 0, 0.65), rgba(0, 0, 0, 0.8)), 
+                        url('https://images.unsplash.com/photo-1669931842845-a4bbf4cb1da0?q=80&w=1920') no-repeat center center/cover;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 70, 0, 0.4);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            border: 3px solid #ffdc00; /* Detalhe Amarelo Canarinho */
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            color: #009c3b; /* Verde Bandeira */
+            margin-bottom: 5px;
+            font-size: 34px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p.subtitle {
+            color: #111;
+            font-weight: bold;
+            margin-bottom: 25px;
+            background: #ffdc00;
+            display: inline-block;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #009c3b;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #009c3b;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            background: #f9f9f9;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: #ffdc00;
+            box-shadow: 0 0 8px rgba(255, 220, 0, 0.5);
+        }
+
+        button {
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #btn-start, #btn-restart, #btn-next {
+            width: 100%;
+            padding: 15px;
+            background: #009c3b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(0, 156, 59, 0.3);
+        }
+
+        #btn-start:hover, #btn-restart:hover, #btn-next:hover {
+            background: #007c2f;
+        }
+
+        #btn-next {
+            background: #ffdc00;
+            color: #111;
+            margin-top: 25px;
+            box-shadow: 0 4px 10px rgba(255, 220, 0, 0.4);
+            animation: pulse 1.5s infinite;
+        }
+        #btn-next:hover {
+            background: #e6c500;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* Configuração do Painel do Quiz */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-bottom: 25px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        #timer {
+            background: #ffdc00;
+            color: #111;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        #question-text {
+            margin-bottom: 35px;
+            color: #111;
+            font-size: 22px;
+        }
+
+        /* Grid de Respostas das Alternativas (Estilo Kahoot) */
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn-answer {
+            padding: 30px 15px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Paleta de Cores do Kahoot */
+        .red { background-color: #e21b3c; }
+        .blue { background-color: #1368ce; }
+        .yellow { background-color: #d89e00; }
+        .green { background-color: #26890c; }
+
+        .btn-answer:not(:disabled):hover {
+            filter: brightness(0.85);
+        }
+
+        /* Efeitos visuais após responder (Revelar Corretas/Erradas) */
+        .btn-answer:disabled {
+            cursor: not-allowed;
+            filter: grayscale(0.6) opacity(0.4);
+        }
+
+        .btn-answer.correct-reveal {
+            filter: none !important;
+            background-color: #26890c !important; 
+            box-shadow: 0 0 15px #26890c;
+            transform: scale(1.02);
+        }
+
+        .btn-answer.wrong-reveal {
+            filter: none !important;
+            background-color: #e21b3c !important; 
+        }
+
+        #feedback-message {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .text-correct { color: #26890c; }
+        .text-wrong { color: #e21b3c; }
+
+        /* Rodapé de Histórico Local */
+        .history-section {
+            margin-top: 25px;
+            border-top: 2px solid #ddd;
+            padding-top: 15px;
+            text-align: left;
+        }
+
+        .history-section h3 {
+            margin-bottom: 8px;
+            color: #009c3b;
+            font-size: 16px;
+        }
+
+        #history-list {
+            list-style: none;
+            max-height: 110px;
+            overflow-y: auto;
+        }
+
+        #history-list li {
+            padding: 6px 10px;
+            background: #f4fdf6;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            border-left: 4px solid #ffdc00;
+        }
+
+        /* Seção Expandida: Exportador/Importador de Perguntas */
+        .admin-section {
+            margin-top: 20px;
+            border-top: 2px dashed #ccc;
+            padding-top: 15px;
+            text-align: left;
+        }
+
+        .admin-toggle {
+            background: none;
+            border: none;
+            color: #555;
+            font-size: 13px;
+            text-decoration: underline;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .admin-content h4 {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        #json-textarea {
+            width: 100%;
+            height: 120px;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 8px;
+            border: 1px solid #aaa;
+            border-radius: 6px;
+            resize: vertical;
+            background: #fff;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .btn-admin-action {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            color: white;
+        }
+
+        .btn-copy { background-color: #1368ce; }
+        .btn-save-json { background-color: #26890c; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-start" class="card">
+        <h1>🏆 Copa Quiz 🏆</h1>
+        <p class="subtitle">Edição Especial: Neymar Jr 🔟🇧🇷</p>
+        
+        <div class="input-group">
+            <label for="username">Seu Nome / Nickname:</label>
+            <input type="text" id="username" placeholder="Ex: O_Ousado10" required>
+        </div>
+
+        <div class="input-group">
+            <label for="quiz-length">Quantidade de Perguntas:</label>
+            <select id="quiz-length">
+                <option value="3">3 Perguntas</option>
+                <option value="5">5 Perguntas</option>
+                <option value="10">10 Perguntas</option>
+                <option value="20">20 Perguntas</option>
+                <option value="30">30 Perguntas</option>
+                <option value="40">40 Perguntas</option>
+            </select>
+        </div>
+
+        <button id="btn-start">Iniciar Jogo ⚽</button>
+
+        <div class="history-section">
+            <h3>📜 Histórico de Partidas</h3>
+            <ul id="history-list"></ul>
+        </div>
+
+        <div class="admin-section">
+            <button class="admin-toggle" onclick="toggleAdminPanel()">🛠️ Exibir/Ocultar Exportador de Perguntas</button>
+            <div id="admin-content" class="admin-content hidden">
+                <h4>📦 JSON das Perguntas (Exportar/Importar)</h4>
+                <textarea id="json-textarea" spellcheck="false"></textarea>
+                <div class="admin-actions">
+                    <button class="btn-admin-action btn-copy" onclick="copiarJSON()">📋 Copiar Texto</button>
+                    <button class="btn-admin-action btn-save-json" onclick="salvarNovoJSON()">💾 Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-quiz" class="card hidden">
+        <div class="quiz-header">
+            <span id="question-number">Pergunta 1/X</span>
+            <div id="timer">⏱️ <span id="time-left">0</span>s</div>
+        </div>
+        
+        <h2 id="question-text">Buscando pergunta...</h2>
+
+        <div class="answers-grid">
+            <button class="btn-answer red" data-index="0"></button>
+            <button class="btn-answer blue" data-index="1"></button>
+            <button class="btn-answer yellow" data-index="2"></button>
+            <button class="btn-answer green" data-index="3"></button>
+        </div>
+
+        <div id="feedback-message" class="hidden"></div>
+        <button id="btn-next" class="hidden">Avançar para a próxima ➡️</button>
+    </div>
+
+    <div id="screen-result" class="card hidden">
+        <h2 style="color: #009c3b;">Fim de Jogo! 🎉</h2>
+        <br>
+        <p id="result-message" style="font-size: 18px; line-height: 1.6;"></p>
+        <br>
+        <button id="btn-restart">Jogar Novamente 🔄</button>
+    </div>
+
+    <script>
+        // Banco de dados base padrão (Caso o usuário nunca tenha salvo um customizado)
+        const perguntasPadrao = [
+            { "pergunta": "Em qual ano o Brasil ganhou sua primeira Copa do Mundo?", "alternativas": ["1950", "1958", "1962", "1970"], "correta": 1 },
+            { "pergunta": "Quem é o maior artilheiro da história das Copas do Mundo?", "alternativas": ["Miroslav Klose", "Ronaldo Fenômeno", "Pelé", "Maradona"], "correta": 0 },
+            { "pergunta": "Quantos gols Neymar marcou na Copa do Mundo de 2014?", "alternativas": ["2 gols", "3 gols", "4 gols", "5 gols"], "correta": 2 },
+            { "pergunta": "Qual país sediou a Copa do Mundo de 2010?", "alternativas": ["Alemanha", "África do Sul", "Brasil", "Catar"], "correta": 1 },
+            { "pergunta": "Contra qual seleção Neymar estreou em Copas do Mundo (em 2014)?", "alternativas": ["Croácia", "México", "Camarões", "Chile"], "correta": 0 },
+            { "pergunta": "Qual dessas seleções foi a campeã da Copa do Mundo de 2022?", "alternativas": ["França", "Brasil", "Marrocos", "Argentina"], "correta": 3 },
+            { "pergunta": "Em qual clube europeu Neymar jogava durante a Copa de 2018?", "alternativas": ["Barcelona", "Santos", "Paris Saint-Germain", "Al-Hilal"], "correta": 2 },
+            { "pergunta": "Quantas vezes a Seleção Brasileira chegou à final na história das Copas?", "alternativas": ["5 vezes", "7 vezes", "6 vezes", "8 vezes"], "correta": 1 },
+            { "pergunta": "Qual jogador é conhecido como o 'Rei do Futebol' no Brasil?", "alternativas": ["Zico", "Ronaldo", "Neymar", "Pelé"], "correta": 3 },
+            { "pergunta": "Em qual Copa do Mundo a tecnologia do VAR foi usada pela primeira vez?", "alternativas": ["2010", "2014", "2018", "2022"], "correta": 2 },
+            { "pergunta": "Qual país venceu a primeira Copa do Mundo em 1930?", "alternativas": ["Brasil", "Argentina", "Uruguai", "Itália"], "correta": 2 },
+            { "pergunta": "De qual clube brasileiro Neymar saiu para ir para a Europa?", "alternativas": ["Flamengo", "Palmeiras", "São Paulo", "Santos"], "correta": 3 },
+            { "pergunta": "Quem era o técnico do Brasil na Copa do Mundo de 2014?", "alternativas": ["Tite", "Felipão", "Dunga", "Zagallo"], "correta": 1 },
+            { "pergunta": "Qual seleção eliminou o Brasil na Copa do Mundo de 2018?", "alternativas": ["Bélgica", "Alemanha", "França", "Croácia"], "correta": 0 },
+            { "pergunta": "Quantas Copas do Mundo a Itália conquistou até hoje?", "alternativas": ["2", "3", "4", "5"], "correta": 2 },
+            { "pergunta": "Quem marcou o gol do título da Alemanha na final de 2014?", "alternativas": ["Müller", "Klose", "Kroos", "Mario Götze"], "correta": 3 },
+            { "pergunta": "Em qual Copa do Mundo Neymar usou a camisa número 10 pela primeira vez?", "alternativas": ["2010", "2014", "2018", "2022"], "correta": 1 },
+            { "pergunta": "Qual país sediou a Copa do Mundo de 1994?", "alternativas": ["França", "Estados Unidos", "Itália", "México"], "correta": 1 },
+            { "pergunta": "Quem foi o capitão do Brasil no tetracampeonato em 1994?", "alternativas": ["Dunga", "Cafu", "Romário", "Bebeto"], "correta": 0 },
+            { "pergunta": "Qual país africano teve a melhor campanha em 2022 chegando à semifinal?", "alternativas": ["Gana", "Senegal", "Camarões", "Marrocos"], "correta": 3 },
+            { "pergunta": "Contra qual país o Brasil jogou a final da Copa do Mundo de 2002?", "alternativas": ["França", "Alemanha", "Itália", "Inglaterra"], "correta": 1 },
+            { "pergunta": "Qual país sediou a Copa de 2006, vencida pela Itália?", "alternativas": ["França", "Japão", "Alemanha", "África do Sul"], "correta": 2 },
+            { "pergunta": "Quantas Copas do Mundo Pelé ganhou jogando?", "alternativas": ["1", "2", "3", "4"], "correta": 2 },
+            { "pergunta": "Em qual cidade foi jogada a final da Copa do Mundo de 2014?", "alternativas": ["São Paulo", "Rio de Janeiro", "Brasília", "Belo Horizonte"], "correta": 1 },
+            { "pergunta": "Quem é o jogador com mais partidas disputadas na história das Copas?", "alternativas": ["Lionel Messi", "Lothar Matthäus", "Miroslav Klose", "Cristiano Ronaldo"], "correta": 0 },
+            { "pergunta": "Qual país sediou a Copa do Mundo de 1998?", "alternativas": ["França", "Brasil", "Coreia do Sul", "Espanha"], "correta": 0 },
+            { "pergunta": "Quem foi o artilheiro da Seleção Brasileira na Copa de 2002?", "alternativas": ["Rivaldo", "Ronaldinho", "Ronaldo Fenômeno", "Kaká"], "correta": 2 },
+            { "pergunta": "Quantos gols o Brasil sofreu na trágica semifinal de 2014?", "alternativas": ["5 gols", "6 gols", "7 gols", "8 gols"], "correta": 2 },
+            { "pergunta": "Em qual país Neymar joga profissionalmente atualmente?", "alternativas": ["Espanha", "França", "Arábia Saudita", "Brasil"], "correta": 2 },
+            { "pergunta": "Qual animal foi o mascote da Copa do Mundo de 2014 no Brasil?", "alternativas": ["Tatu-bola", "Arara-azul", "Onça-pintada", "Jacaré"], "correta": 0 },
+            { "pergunta": "Quem eliminou o Brasil nos pênaltis na Copa de 2022?", "alternativas": ["Croácia", "Argentina", "França", "Holanda"], "correta": 0 },
+            { "pergunta": "Quantas Copas do Mundo a Argentina possui na sua história?", "alternativas": ["2", "3", "4", "5"], "correta": 1 },
+            { "pergunta": "Quem era o camisa 10 da França na Copa de 1998?", "alternativas": ["Henry", "Zidane", "Benzema", "Mbappé"], "correta": 1 },
+            { "pergunta": "Em qual Copa do Mundo Ronaldinho Gaúcho marcou aquele famoso gol de falta contra a Inglaterra?", "alternativas": ["1998", "2002", "2006", "2010"], "correta": 1 },
+            { "pergunta": "Qual país tem o maior número de títulos mundiais de futebol?", "alternativas": ["Alemanha", "Itália", "Argentina", "Brasil"], "correta": 3 },
+            { "pergunta": "Qual país dividiu a sede da Copa de 2002 com o Japão?", "alternativas": ["Coreia do Sul", "China", "Austrália", "Catar"], "correta": 0 },
+            { "pergunta": "Qual goleiro foi o herói do Brasil na disputa de pênaltis contra o Chile em 2014?", "alternativas": ["Alisson", "Marcos", "Júlio César", "Dida"], "correta": 2 },
+            { "pergunta": "Quem marcou o gol do Brasil na derrota por 7 a 1 contra a Alemanha?", "alternativas": ["Oscar", "Neymar", "Fred", "David Luiz"], "correta": 0 },
+            { "pergunta": "Qual é o nome oficial do troféu entregue ao campeão da Copa hoje?", "alternativas": ["Taça Jules Rimet", "Taça FIFA da Copa do Mundo", "Taça Ouro", "Troféu Mundial"], "correta": 1 },
+            { "pergunta": "Quem foi o técnico da Seleção Brasileira nas Copas de 2018 e 2022?", "alternativas": ["Dunga", "Felipão", "Tite", "Dorival Júnior"], "correta": 2 }
+        ];
+
+        // Carrega as perguntas salvas ou usa as padrões
+        let bancoPerguntasJSON = JSON.parse(localStorage.getItem('bancoPerguntasCustom')) || perguntasPadrao;
+
+        // Elementos DOM
+        const screenStart = document.getElementById('screen-start');
+        const screenQuiz = document.getElementById('screen-quiz');
+        const screenResult = document.getElementById('screen-result');
+        const inputUsername = document.getElementById('username');
+        const selectLength = document.getElementById('quiz-length');
+        const btnStart = document.getElementById('btn-start');
+        const btnRestart = document.getElementById('btn-restart');
+        const btnNext = document.getElementById('btn-next');
+        const historyList = document.getElementById('history-list');
+        const txtQuestionNumber = document.getElementById('question-number');
+        const txtQuestionText = document.getElementById('question-text');
+        const txtTimeLeft = document.getElementById('time-left');
+        const btnAnswers = document.querySelectorAll('.btn-answer');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const txtResultMessage = document.getElementById('result-message');
+        const jsonTextarea = document.getElementById('json-textarea');
+        const adminContent = document.getElementById('admin-content');
+
+        // Estado do Game
+        let perguntasFiltradas = [];
+        let indiceAtual = 0;
+        let acertos = 0;
+        let totalPerguntasDesejadas = 3;
+        let nomeUsuario = "";
+        let tempoTotalSegundos = 0;
+        let intervaloCronometro;
+        let cronometroRodando = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            atualizarInterfaceHistorico();
+            // Preenche o campo de texto com o JSON atual formatado e bonito
+            jsonTextarea.value = JSON.stringify(bancoPerguntasJSON, null, 2);
+        });
+
+        // Alternar visibilidade do painel admin
+        function toggleAdminPanel() {
+            adminContent.classList.toggle('hidden');
+        }
+
+        // Copiar conteúdo JSON
+        function copiarJSON() {
+            jsonTextarea.select();
+            document.execCommand('copy');
+            alert("JSON copiado com sucesso! Você pode colá-lo em um bloco de notas.");
+        }
+
+        // Salvar JSON modificado
+        function salvarNovoJSON() {
+            try {
+                const novoBanco = JSON.parse(jsonTextarea.value);
+                if (!Array.isArray(novoBanco) || novoBanco.length === 0) {
+                    throw new Error("O formato precisa ser uma lista [] de perguntas.");
+                }
+                bancoPerguntasJSON = novoBanco;
+                localStorage.setItem('bancoPerguntasCustom', JSON.stringify(novoBanco));
+                alert(`Sucesso! Foram carregadas ${novoBanco.length} perguntas.`);
+            } catch (e) {
+                alert("Erro no formato do JSON! Verifique se esqueceu alguma vírgula ou colchete.\nDetalhe: " + e.message);
+            }
+        }
+
+        btnStart.addEventListener('click', () => {
+            nomeUsuario = inputUsername.value.trim();
+            if (!nomeUsuario) {
+                alert("Por favor, digite seu nome de jogador antes de começar!");
+                return;
+            }
+
+            totalPerguntasDesejadas = parseInt(selectLength.value);
+            const limitePerguntas = Math.min(totalPerguntasDesejadas, bancoPerguntasJSON.length);
+
+            // Mistura as perguntas aleatoriamente
+            perguntasFiltradas = [...bancoPerguntasJSON]
+                .sort(() => 0.5 - Math.random())
+                .slice(0, limitePerguntas);
+
+            indiceAtual = 0;
+            acertos = 0;
+            tempoTotalSegundos = 0;
+
+            screenStart.classList.add('hidden');
+            screenQuiz.classList.remove('hidden');
+            
+            iniciarCronometro();
+            mostrarPergunta();
+        });
+
+        function iniciarCronometro() {
+            cronometroRodando = true;
+            txtTimeLeft.textContent = tempoTotalSegundos;
+            clearInterval(intervaloCronometro); 
+            intervaloCronometro = setInterval(() => {
+                if (cronometroRodando) {
+                    tempoTotalSegundos++;
+                    txtTimeLeft.textContent = tempoTotalSegundos;
+                }
+            }, 1000);
+        }
+
+        function mostrarPergunta() {
+            feedbackMessage.classList.add('hidden');
+            btnNext.classList.add('hidden');
+
+            const questaoAtual = perguntasFiltradas[indiceAtual];
+            txtQuestionNumber.textContent = `Pergunta ${indiceAtual + 1}/${perguntasFiltradas.length}`;
+            txtQuestionText.textContent = questaoAtual.pergunta;
+
+            btnAnswers.forEach((botao, index) => {
+                botao.textContent = questaoAtual.alternativas[index];
+                botao.disabled = false;
+                botao.className = `btn-answer ${obterCorOriginal(index)}`; 
+                botao.onclick = () => verificarResposta(index);
+            });
+
+            cronometroRodando = true;
+        }
+
+        function obterCorOriginal(index) {
+            if (index === 0) return 'red';
+            if (index === 1) return 'blue';
+            if (index === 2) return 'yellow';
+            return 'green';
+        }
+
+        function verificarResposta(indiceEscolhido) {
+            cronometroRodando = false; 
+            const questaoAtual = perguntasFiltradas[indiceAtual];
+
+            btnAnswers.forEach((botao, index) => {
+                botao.disabled = true;
+                if (index === questaoAtual.correta) {
+                    botao.classList.add('correct-reveal');
+                }
+                if (index === indiceEscolhido && indiceEscolhido !== questaoAtual.correta) {
+                    botao.classList.add('wrong-reveal');
+                }
+            });
+
+            feedbackMessage.classList.remove('hidden');
+            if (indiceEscolhido === questaoAtual.correta) {
+                acertos++;
+                feedbackMessage.textContent = "Acertou! 🎉 Ousadia e Alegria!";
+                feedbackMessage.className = "text-correct";
+            } else {
+                feedbackMessage.textContent = `Errou! ❌ Resposta certa: ${questaoAtual.alternativas[questaoAtual.correta]}`;
+                feedbackMessage.className = "text-wrong";
+            }
+
+            btnNext.classList.remove('hidden');
+        }
+
+        btnNext.addEventListener('click', () => {
+            indiceAtual++;
+            if (indiceAtual >= perguntasFiltradas.length) {
+                finalizarJogo();
+            } else {
+                mostrarPergunta();
+            }
+        });
+
+        function finalizarJogo() {
+            clearInterval(intervaloCronometro);
+            screenQuiz.classList.add('hidden');
+            screenResult.classList.remove('hidden');
+
+            txtResultMessage.innerHTML = `
+                Fim dos 90 minutos, <strong>${nomeUsuario}</strong>!<br>
+                Você concluiu o desafio máximo do Quiz!<br><br>
+                ⚽ Gols/Acertos: <strong>${acertos} de ${perguntasFiltradas.length}</strong><br>
+                ⏱️ Tempo de Partida: <strong>${tempoTotalSegundos} segundos</strong>
+            `;
+
+            salvarNoHistorico();
+        }
+
+        function salvarNoHistorico() {
+            const historico = JSON.parse(localStorage.getItem('historicoMundialKahoot')) || [];
+            const resultadoPartida = {
+                nome: nomeUsuario,
+                acertos: acertos,
+                total: perguntasFiltradas.length,
+                tempo: tempoTotalSegundos
+            };
+            historico.unshift(resultadoPartida); 
+            localStorage.setItem('historicoMundialKahoot', JSON.stringify(historico));
+            atualizarInterfaceHistorico();
+        }
+
+        function atualizarInterfaceHistorico() {
+            const historico = JSON.parse(localStorage.getItem('historicoMundialKahoot')) || [];
+            historyList.innerHTML = "";
+
+            if (historico.length === 0) {
+                historyList.innerHTML = "<li>Nenhuma partida registrada ainda. Estreie o placar!</li>";
+                return;
+            }
+
+            historico.slice(0, 4).forEach(partida => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>⚽ <strong>${partida.nome}</strong></span>
+                    <span>🎯 ${partida.acertos}/${partida.total} acertos | ⏱️ ${partida.tempo}s</span>
+                `;
+                historyList.appendChild(li);
+            });
+        }
+
+        btnRestart.addEventListener('click', () => {
+            screenResult.classList.add('hidden');
+            screenStart.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
