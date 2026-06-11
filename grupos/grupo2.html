@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kahoot World Cup Multiplayer Pro</title>
+    <style>
+        :root {
+            --kahoot-purple: #46178f;
+            --kahoot-red: #e21b3c;
+            --kahoot-blue: #1368ce;
+            --kahoot-yellow: #d89e00;
+            --kahoot-green: #26890c;
+            --kahoot-dark: #1a0933;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body {
+            background-color: var(--kahoot-purple);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { width: 100%; max-width: 900px; }
+
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            position: relative;
+            min-height: 550px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1 { color: var(--kahoot-purple); margin-bottom: 30px; font-size: 36px; width: 100%; }
+        h2 { font-size: 28px; margin-bottom: 20px; color: #222; }
+
+        .form-group { margin: 0 auto 20px auto; text-align: left; max-width: 400px; width: 100%; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #666; }
+        input { 
+            width: 100%; padding: 15px; border: 2px solid #ddd; 
+            border-radius: 8px; font-size: 18px; outline: none;
+        }
+        input:focus { border-color: var(--kahoot-purple); }
+
+        .button-stack { display: flex; flex-direction: column; gap: 10px; max-width: 400px; margin: 20px auto 0; width: 100%; }
+
+        button {
+            width: 100%; padding: 15px 30px; font-size: 18px; font-weight: bold;
+            border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+        }
+
+        .btn-start { background-color: var(--kahoot-green); color: white; }
+        .btn-start:hover { background-color: #1e6d0a; transform: scale(1.02); }
+        .btn-export { background-color: #333; color: white; font-size: 14px; }
+        .btn-import { background-color: #0b61a4; color: white; font-size: 14px; }
+        .btn-export:hover { background-color: #000; }
+        .btn-import:hover { background-color: #074371; }
+
+        /* Botão Sair do Jogo */
+        .btn-leave {
+            position: absolute; top: 15px; left: 20px;
+            background-color: #777; color: white; font-size: 13px;
+            padding: 8px 15px; width: auto; font-weight: bold; z-index: 10;
+        }
+        .btn-leave:hover { background-color: var(--kahoot-red); }
+
+        .hidden { display: none !important; }
+
+        /* Timer */
+        .timer-circle {
+            width: 85px; height: 85px; border: 6px solid var(--kahoot-purple);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 34px; font-weight: bold; margin-bottom: 25px; transition: all 0.3s;
+        }
+
+        .question-text { font-size: 28px; font-weight: bold; margin-bottom: 40px; line-height: 1.4; color: #222; width: 100%; }
+
+        /* Grid de Respostas */
+        .answers-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; }
+
+        .answer-btn {
+            height: 110px; color: white; font-size: 22px; font-weight: bold;
+            display: flex; align-items: center; padding: 20px; border-radius: 8px;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.15); text-align: left; width: 100%;
+        }
+        .answer-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,0.15); }
+        .answer-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .answer-btn i { font-size: 28px; margin-right: 15px; font-style: normal; }
+
+        .red { background-color: var(--kahoot-red); }
+        .blue { background-color: var(--kahoot-blue); }
+        .yellow { background-color: var(--kahoot-yellow); }
+        .green { background-color: var(--kahoot-green); }
+
+        /* HUDs e Telas de Transição */
+        .hud {
+            display: flex; justify-content: space-between; align-items: center;
+            position: absolute; top: 20px; left: 130px; right: 40px; /* Recuado para dar espaço ao botão Sair */
+            font-weight: bold; color: #777; font-size: 16px; width: calc(100% - 170px);
+        }
+        .score-box { color: var(--kahoot-green); font-size: 18px; }
+        #status-overlay { color: var(--kahoot-red); font-size: 22px; font-weight: bold; margin-bottom: 15px; letter-spacing: 1px; }
+
+        /* Tela de Espera Animada */
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--kahoot-purple);
+            border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Leaderboard */
+        .rank-badge { font-size: 72px; font-weight: bold; color: var(--kahoot-blue); margin: 15px 0; }
+        .points-badge { font-size: 32px; font-weight: bold; color: var(--kahoot-green); margin-bottom: 25px; }
+        
+        .leaderboard-mini { width: 100%; max-width: 400px; text-align: left; margin-top: 15px; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 8px 12px; margin-bottom: 5px; background: #f5f5f5; border-radius: 5px; font-weight: bold; }
+        .leaderboard-item.player { background: #eadeff; color: var(--kahoot-purple); }
+    </style>
+</head>
+<body>
+
+    <button id="global-leave-btn" class="btn-leave hidden" onclick="leaveGame()">✖ SAIR</button>
+
+    <div class="container">
+        <div id="start-screen" class="card">
+            <h1>Copa do Mundo Quiz</h1>
+            
+            <div class="form-group">
+                <label for="username">Nickname do Jogador</label>
+                <input type="text" id="username" placeholder="Ex: GalvãoBueno" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="qty">Quantidade de Perguntas (Máx: 200)</label>
+                <input type="number" id="qty" value="5" min="1" max="200">
+            </div>
+
+            <div class="button-stack">
+                <button class="btn-start" onclick="startGame()">ENTRAR NA SALA MULTIPLAYER</button>
+                
+                <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="handleJSONImport(event)">
+                <button class="btn-import" onclick="document.getElementById('import-file-input').click()">📥 IMPORTAR PERGUNTAS (JSON)</button>
+                
+                <button class="btn-export" onclick="exportJSONData()">📤 EXPORTAR BANCO ATUAL</button>
+            </div>
+        </div>
+
+        <div id="game-screen" class="card hidden">
+            <div class="hud">
+                <div id="q-count">Pergunta 0/0</div>
+                <div class="score-box">Pontos: <span id="current-score">0</span></div>
+            </div>
+            <div id="timer" class="timer-circle">5</div>
+            <div id="status-overlay">LEIA A PERGUNTA</div>
+            <div id="question-display" class="question-text">Carregando dados...</div>
+            <div id="answers-container" class="answers-grid hidden">
+                <button class="answer-btn red" onclick="submitAnswer(0)"><i>▲</i> <span class="txt"></span></button>
+                <button class="answer-btn blue" onclick="submitAnswer(1)"><i>◆</i> <span class="txt"></span></button>
+                <button class="answer-btn yellow" onclick="submitAnswer(2)"><i>●</i> <span class="txt"></span></button>
+                <button class="answer-btn green" onclick="submitAnswer(3)"><i>■</i> <span class="txt"></span></button>
+            </div>
+        </div>
+
+        <div id="waiting-screen" class="card hidden">
+            <h2>Aguardando outros jogadores...</h2>
+            <p style="color: #666;" id="waiting-msg">Os outros participantes estão respondendo.</p>
+            <div class="spinner"></div>
+            <p style="font-weight: bold; color: var(--kahoot-purple);" id="players-done-count">Respostas: 1/5</p>
+        </div>
+
+        <div id="round-results-screen" class="card hidden">
+            <h2 id="round-feedback">Você acertou!</h2>
+            <div id="points-gained" style="font-size: 22px; margin-top: 10px;">+0 pontos nesta rodada</div>
+            <div class="rank-badge" id="current-rank">#1</div>
+            <div class="points-badge"><span id="accumulated-points">0</span> pts totais</div>
+            
+            <div class="leaderboard-mini">
+                <p style="font-weight: bold; margin-bottom: 8px; color: #555;">Classificação Provisória:</p>
+                <div id="leaderboard-list"></div>
+            </div>
+            <div class="button-stack" style="margin-top: 25px;">
+                <button class="btn-start" style="background-color: var(--kahoot-purple);" onclick="nextRoundFlow()">AVANÇAR</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="card hidden">
+            <h1>Pódio Final</h1>
+            <p id="final-player" style="font-size: 24px; color: #555; margin-bottom: 10px;"></p>
+            <div style="font-size: 56px; font-weight: bold; color: var(--kahoot-green); margin-bottom: 10px;">
+                <span id="total-points">0</span> pts
+            </div>
+            <div class="rank-badge" id="final-rank" style="color: var(--kahoot-yellow); margin-bottom: 30px;">#1 lugar</div>
+            <div class="button-stack">
+                <button class="btn-start" onclick="leaveGame()">VOLTAR AO INÍCIO</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // BANCO DE DADOS PADRÃO (Variabilidade de perguntas)
+        let jsonQuestionsRaw = `[
+            { "q": "Qual país ganhou a primeira Copa do Mundo em 1930?", "a": ["Brasil", "Argentina", "Uruguai", "Itália"], "c": 2, "type": "multi" },
+            { "q": "O Brasil é o único país que participou de todas as edições da Copa?", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
+            { "q": "Quem é o maior artilheiro da história das Copas do Mundo?", "a": ["Pelé", "Miroslav Klose", "Ronaldo Fenômeno", "Lionel Messi"], "c": 1, "type": "multi" },
+            { "q": "A Copa do Mundo de 2022 no Catar foi disputada em Julho?", "a": ["Verdadeiro", "Falso"], "c": 1, "type": "tf" },
+            { "q": "Qual dessas seleções possui exatamente 4 títulos da Copa?", "a": ["Alemanha", "França", "Argentina", "Espanha"], "c": 0, "type": "multi" },
+            { "q": "O Uruguai sediou e venceu a primeira Copa do Mundo?", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
+            { "q": "Qual país sediou a Copa do Mundo de 2010?", "a": ["França", "Coreia / Japão", "Alemanha", "África do Sul"], "c": 3, "type": "multi" },
+            { "q": "Zidane jogou profissionalmente pela seleção da Itália?", "a": ["Verdadeiro", "Falso"], "c": 1, "type": "tf" },
+            { "q": "Em que ano a França ganhou sua primeira Copa do Mundo?", "a": ["1998", "2018", "2006", "1982"], "c": 0, "type": "multi" },
+            { "q": "Maradona fez o gol conhecido como 'Mão de Deus' contra a Inglaterra?", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
+            { "q": "Qual país é o maior vencedor da história das Copas do Mundo?", "a": ["Alemanha", "Itália", "Argentina", "Brasil"], "c": 3, "type": "multi" },
+            { "q": "A seleção da Itália ficou fora das edições de 2018 e 2022?", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
+            { "q": "Quem marcou o gol do título da Alemanha na prorrogação da final de 2014?", "a": ["Müller", "Klose", "Mario Götze", "Kroos"], "c": 2, "type": "multi" },
+            { "q": "A primeira Copa do Mundo Feminina da FIFA ocorreu em 1991?", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" },
+            { "q": "Quantas Copas do Mundo a Argentina possui após a conquista de 2022?", "a": ["2 títulos", "3 títulos", "4 títulos", "5 títulos"], "c": 1, "type": "multi" },
+            { "q": "Qual país africano foi o primeiro a chegar em uma semifinal de Copa do Mundo?", "a": ["Camarões", "Gana", "Nigéria", "Marrocos"], "c": 3, "type": "multi" },
+            { "q": "Pelé conquistou 4 Copas do Mundo como jogador?", "a": ["Verdadeiro", "Falso"], "c": 1, "type": "tf" },
+            { "q": "Qual país europeu venceu sua primeira e única Copa do Mundo em 2010?", "a": ["Espanha", "Holanda", "França", "Portugal"], "c": 0, "type": "multi" },
+            { "q": "Em qual Copa do Mundo foi introduzido o uso oficial do VAR?", "a": ["Brasil 2014", "Rússia 2018", "Catar 2022", "África do Sul 2010"], "c": 1, "type": "multi" },
+            { "q": "A seleção da Inglaterra venceu sua única Copa jogando em seu próprio país?", "a": ["Verdadeiro", "Falso"], "c": 0, "type": "tf" }
+        ]`;
+
+        let fullQuestionDatabase = JSON.parse(jsonQuestionsRaw);
+
+        // Estado do Jogo
+        let activeQuizQuestions = [];
+        let currentIndex = 0;
+        let playerScore = 0;
+        let lastPointsGained = 0;
+        let timerInterval;
+        let simulationInterval;
+        let clockTime = 0;
+        let questionOpeningTime = 0;
+        let username = "";
+        const ANSWER_WINDOW_MS = 15000;
+
+        let lobbyPlayers = [
+            { name: "Neymar_Jr", score: 0, speed: 0.4 },
+            { name: "MbappéBot", score: 0, speed: 0.2 },
+            { name: "MessiMagic", score: 0, speed: 0.3 },
+            { name: "CR7_Robozao", score: 0, speed: 0.1 }
+        ];
+
+        // FUNÇÃO DE IMPORTAÇÃO DE ARQUIVO JSON EXTERNO
+        function handleJSONImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData) && importedData.length > 0 && importedData[0].q) {
+                        fullQuestionDatabase = importedData;
+                        jsonQuestionsRaw = e.target.result; // Atualiza a string raw para caso de exportação futura
+                        alert(`Sucesso! Foram importadas ${importedData.length} perguntas.`);
+                    } else {
+                        alert("Formato inválido. Certifique-se de usar a estrutura correta (Array com perguntas 'q', respostas 'a', etc).");
+                    }
+                } catch (err) {
+                    alert("Erro ao ler o arquivo JSON. Verifique a sintaxe.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // FUNÇÃO DE SAÍDA DE JOGO A QUALQUER MOMENTO
+        function leaveGame() {
+            // Limpa todos os loops ativos de contagem e simulação
+            clearInterval(timerInterval);
+            clearInterval(simulationInterval);
+            
+            // Oculta todas as telas possíveis de jogo
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('waiting-screen').classList.add('hidden');
+            document.getElementById('round-results-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('global-leave-btn').classList.add('hidden'); // Some botão de sair
+            
+            // Restaura tela inicial
+            document.getElementById('start-screen').classList.remove('hidden');
+            
+            // Reseta variáveis básicas
+            playerScore = 0;
+            currentIndex = 0;
+            document.getElementById('current-score').textContent = "0";
+        }
+
+        function exportJSONData() {
+            const blob = new Blob([jsonQuestionsRaw], { type: "application/json" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = "perguntas_copa_atual.json";
+            link.click();
+        }
+
+        function startGame() {
+            username = document.getElementById('username').value.trim();
+            const requestedQty = parseInt(document.getElementById('qty').value);
+
+            if(!username) return alert("Por favor, digite um Nickname!");
+            if(isNaN(requestedQty) || requestedQty < 1) return alert("Defina uma quantidade válida.");
+
+            let expandedList = [];
+            while(expandedList.length < requestedQty) {
+                let shuffledChunk = [...fullQuestionDatabase].sort(() => Math.random() - 0.5);
+                expandedList = expandedList.concat(shuffledChunk);
+            }
+            activeQuizQuestions = expandedList.slice(0, requestedQty);
+            
+            lobbyPlayers.forEach(p => p.score = 0);
+            playerScore = 0;
+            currentIndex = 0;
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('global-leave-btn').classList.remove('hidden'); // Exibe botão Sair
+            loadRound();
+        }
+
+        function loadRound() {
+            document.getElementById('round-results-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            const currentQuestion = activeQuizQuestions[currentIndex];
+            document.getElementById('q-count').textContent = `Pergunta ${currentIndex + 1}/${activeQuizQuestions.length}`;
+            document.getElementById('question-display').textContent = currentQuestion.q;
+            document.getElementById('timer').style.borderColor = "var(--kahoot-purple)";
+            
+            document.getElementById('answers-container').classList.add('hidden');
+            document.getElementById('status-overlay').classList.remove('hidden');
+            document.getElementById('status-overlay').textContent = "LEIA A PERGUNTA...";
+
+            runCountdown(5, true);
+        }
+
+        function runCountdown(seconds, isReadingPhase) {
+            clearInterval(timerInterval);
+            clockTime = seconds;
+            document.getElementById('timer').textContent = clockTime;
+
+            timerInterval = setInterval(() => {
+                clockTime--;
+                document.getElementById('timer').textContent = clockTime;
+
+                if(clockTime <= 0) {
+                    clearInterval(timerInterval);
+                    if(isReadingPhase) {
+                        revealAnswersGrid();
+                    } else {
+                        submitAnswer(-1);
+                    }
+                }
+            }, 1000);
+        }
+
+        function revealAnswersGrid() {
+            const currentQuestion = activeQuizQuestions[currentIndex];
+            const container = document.getElementById('answers-container');
+            const actionButtons = container.querySelectorAll('.answer-btn');
+            
+            document.getElementById('status-overlay').classList.add('hidden');
+            container.classList.remove('hidden');
+            document.getElementById('timer').style.borderColor = "var(--kahoot-blue)";
+
+            actionButtons.forEach((btn, idx) => {
+                const textPlaceholder = btn.querySelector('.txt');
+                if(currentQuestion.a[idx] !== undefined) {
+                    btn.classList.remove('hidden');
+                    btn.disabled = false;
+                    textPlaceholder.textContent = currentQuestion.a[idx];
+                } else {
+                    btn.classList.add('hidden'); 
+                }
+            });
+
+            questionOpeningTime = Date.now();
+            runCountdown(15, false);
+        }
+
+        function submitAnswer(chosenIndex) {
+            clearInterval(timerInterval);
+            const currentQuestion = activeQuizQuestions[currentIndex];
+            lastPointsGained = 0;
+
+            document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
+            
+            if(chosenIndex === currentQuestion.c) {
+                const timeSpent = Date.now() - questionOpeningTime;
+                const penaltyRatio = timeSpent / ANSWER_WINDOW_MS;
+                lastPointsGained = Math.max(500, Math.round(1000 * (1 - (penaltyRatio / 2))));
+                playerScore += lastPointsGained;
+                document.getElementById('round-feedback').textContent = "Você acertou! 🟢";
+                document.getElementById('round-feedback').style.color = "var(--kahoot-green)";
+            } else {
+                document.getElementById('round-feedback').textContent = chosenIndex === -1 ? "Tempo Esgotado! ⏰" : "Incorreto! ❌";
+                document.getElementById('round-feedback').style.color = "var(--kahoot-red)";
+            }
+
+            document.getElementById('current-score').textContent = playerScore;
+            switchToWaitingScreen();
+        }
+
+        function switchToWaitingScreen() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('waiting-screen').classList.remove('hidden');
+            
+            let answersReceived = 1;
+            document.getElementById('players-done-count').textContent = `Respostas: ${answersReceived}/5`;
+
+            simulationInterval = setInterval(() => {
+                answersReceived++;
+                document.getElementById('players-done-count').textContent = `Respostas: ${answersReceived}/5`;
+                
+                if(answersReceived >= 5) {
+                    clearInterval(simulationInterval);
+                    processLeaderboardAndShowResults();
+                }
+            }, 600 + Math.random() * 800);
+        }
+
+        function processLeaderboardAndShowResults() {
+            const currentQuestion = activeQuizQuestions[currentIndex];
+
+            lobbyPlayers.forEach(bot => {
+                const acertou = Math.random() > bot.speed; 
+                if(acertou) {
+                    const botPoints = Math.round(500 + Math.random() * 450);
+                    bot.score += botPoints;
+                }
+            });
+
+            let standIngs = [
+                { name: username, score: playerScore, isMe: true },
+                ...lobbyPlayers.map(b => ({ name: b.name, score: b.score, isMe: false }))
+            ];
+            
+            standIngs.sort((x, y) => y.score - x.score);
+            let playerRank = standIngs.findIndex(item => item.isMe) + 1;
+
+            document.getElementById('points-gained').textContent = `+${lastPointsGained} pontos nesta rodada`;
+            document.getElementById('current-rank').textContent = `#${playerRank}`;
+            document.getElementById('accumulated-points').textContent = playerScore;
+
+            const listContainer = document.getElementById('leaderboard-list');
+            listContainer.innerHTML = "";
+            standIngs.forEach((pos, index) => {
+                const row = document.createElement('div');
+                row.className = `leaderboard-item ${pos.isMe ? 'player' : ''}`;
+                row.innerHTML = `<span>${index + 1}. ${pos.name}</span> <span>${pos.score} pts</span>`;
+                listContainer.appendChild(row);
+            });
+
+            document.getElementById('waiting-screen').classList.add('hidden');
+            document.getElementById('round-results-screen').classList.remove('hidden');
+        }
+
+        function nextRoundFlow() {
+            currentIndex++;
+            if(currentIndex < activeQuizQuestions.length) {
+                loadRound();
+            } else {
+                showFinalPodium();
+            }
+        }
+
+        function showFinalPodium() {
+            document.getElementById('round-results-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('hidden');
+            
+            document.getElementById('final-player').textContent = username;
+            document.getElementById('total-points').textContent = playerScore;
+            
+            let finalStandings = [
+                { name: username, score: playerScore, isMe: true },
+                ...lobbyPlayers.map(b => ({ name: b.name, score: b.score, isMe: false }))
+            ].sort((x, y) => y.score - x.score);
+            
+            let finalRank = finalStandings.findIndex(item => item.isMe) + 1;
+            document.getElementById('final-rank').textContent = `#${finalRank} Lugar`;
+        }
+    </script>
+</body>
+</html>
